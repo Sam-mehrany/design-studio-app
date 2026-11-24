@@ -111,6 +111,8 @@ function createWindow(url) {
   });
   win.loadURL(url);
   win.on('closed', () => { win = null; });
+  win.webContents.on('did-finish-load', () => console.log(`[app] window loaded ${url}`));
+  win.webContents.on('did-fail-load', (_e, code, desc) => console.error(`[app] load failed ${code} ${desc}`));
 
   // Anything that is not the local studio opens in the real browser.
   win.webContents.setWindowOpenHandler(({ url: target }) => {

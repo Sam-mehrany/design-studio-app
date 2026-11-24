@@ -4,6 +4,10 @@ An installable Windows app around the design reference library, so it opens like
 rather than a page in a browser. The library itself stays in the vault at
 `D:\Memory\design`; this is only the shell.
 
+**This project lives on `E:`** — `node_modules` is ~557 MB and `dist/` adds a few hundred
+more, which `D:` cannot spare: on 24 Nov 2026 it had 9.3 GB free against 55.6 GB on `E:`.
+Electron's own caches still go to `%LOCALAPPDATA%` on `C:`, which had 41.8 GB.
+
 ## Build
 
 ```bash
