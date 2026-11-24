@@ -1,0 +1,37 @@
+{
+  "name": "design-studio",
+  "productName": "Design Studio",
+  "version": "1.0.0",
+  "description": "Browse, classify and link your design reference library.",
+  "main": "main.js",
+  "author": "Sam Mehrany",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "sync": "node sync-server.js",
+    "start": "npm run sync && electron .",
+    "dist": "npm run sync && electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "33.2.0",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "com.sammehrany.designstudio",
+    "productName": "Design Studio",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.js", "preload.js", "server/**/*", "package.json"],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Design Studio"
+    }
+  }
+}

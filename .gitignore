@@ -1,0 +1,8 @@
+node_modules/
+dist/
+
+# Both are generated, so they are not sources:
+#   server/       copied from the vault by sync-server.js
+#   build/icon.*  drawn by make-icon.js
+server/
+build/
