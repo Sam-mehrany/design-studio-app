@@ -19,6 +19,21 @@ const SETTINGS = () => path.join(app.getPath('userData'), 'settings.json');
 let child = null;
 let win = null;
 let serverUrl = null;
+let quitConfirmed = false;
+
+/** Ask the server whether an ingest is in flight, so quitting can warn instead of killing it. */
+const ingestRunning = () => new Promise((resolve) => {
+  if (!serverUrl) return resolve(false);
+  const req = require('http').get(`${serverUrl}api/ingest/status`, { headers: { 'X-Studio': '1' } }, (res) => {
+    let body = '';
+    res.on('data', (d) => { body += d; });
+    res.on('end', () => {
+      try { resolve(!!JSON.parse(body).running); } catch { resolve(false); }
+    });
+  });
+  req.setTimeout(2000, () => { req.destroy(); resolve(false); });
+  req.on('error', () => resolve(false));
+});
 
 /* ---------- vault location ---------- */
 
@@ -111,6 +126,27 @@ function createWindow(url) {
   });
   win.loadURL(url);
   win.on('closed', () => { win = null; });
+
+  // An ingest takes minutes and dies with the app, so closing mid-run silently loses the
+  // work and leaves the images sitting in the inbox. Ask first.
+  win.on('close', (e) => {
+    if (quitConfirmed) return;
+    e.preventDefault();
+    ingestRunning().then(async (busy) => {
+      if (!busy) { quitConfirmed = true; win.close(); return; }
+      const { response } = await dialog.showMessageBox(win, {
+        type: 'warning',
+        title: 'Analysis in progress',
+        message: 'An analysis is still running.',
+        detail: 'Closing now cancels it. The images stay in the inbox, unanalysed.',
+        buttons: ['Keep it running', 'Close anyway'],
+        defaultId: 0,
+        cancelId: 0,
+      });
+      if (response === 1) { quitConfirmed = true; win.close(); }
+    }).catch(() => { quitConfirmed = true; win.close(); });
+  });
+
   win.webContents.on('did-finish-load', () => console.log(`[app] window loaded ${url}`));
   win.webContents.on('did-fail-load', (_e, code, desc) => console.error(`[app] load failed ${code} ${desc}`));
 
