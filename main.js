@@ -93,9 +93,31 @@ const waitFor = (url, tries = 60) => new Promise((resolve, reject) => {
   attempt(tries);
 });
 
+/**
+ * Prefer the vault's own server over the bundled copy.
+ *
+ * The bundle lives inside the asar, so without this every server fix — not just a CSS
+ * tweak — needs a rebuild and a reinstall. The vault is already the source of truth
+ * (sync-server.js copies out of it), and studio.js resolves lib.js and ui/ relative to
+ * itself, so pointing at the vault makes the whole server live. The bundled copy stays as
+ * the fallback for a vault that has no tools folder.
+ */
+function serverEntry(vault) {
+  const live = path.join(vault, 'tools', 'studio.js');
+  try {
+    if (fs.existsSync(live) && fs.existsSync(path.join(vault, 'tools', 'lib.js'))) {
+      console.log(`[app] server: ${live} (live from the vault)`);
+      return live;
+    }
+  } catch { /* fall through to the bundle */ }
+  const bundled = path.join(__dirname, 'server', 'studio.js');
+  console.log(`[app] server: ${bundled} (bundled)`);
+  return bundled;
+}
+
 async function startServer(vault) {
   const port = await freePort(7391);
-  const entry = path.join(__dirname, 'server', 'studio.js');
+  const entry = serverEntry(vault);
   child = fork(entry, ['--port', String(port)], {
     env: { ...process.env, DESIGN_VAULT: vault, ELECTRON_RUN_AS_NODE: '1' },
     stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
