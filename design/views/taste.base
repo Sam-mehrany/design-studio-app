@@ -1,0 +1,64 @@
+filters:
+  or:
+    - note.type == "design-pref"
+    - note.type == "design-ddr"
+    - note.type == "design-brief"
+
+properties:
+  note.polarity:
+    displayName: Polarity
+  note.scope:
+    displayName: Scope
+  note.facets:
+    displayName: Facet terms
+  note.evidence_date:
+    displayName: Evidence
+
+views:
+  - type: table
+    name: Preferences
+    filters:
+      and:
+        - note.type == "design-pref"
+    order:
+      - note.id
+      - note.title
+      - note.polarity
+      - note.scope
+      - note.evidence_date
+
+  - type: table
+    name: Rejections only
+    filters:
+      and:
+        - note.type == "design-pref"
+        - note.polarity == "reject"
+    order:
+      - note.id
+      - note.title
+      - note.scope
+      - note.facets
+
+  - type: table
+    name: Decisions
+    filters:
+      and:
+        - note.type == "design-ddr"
+    order:
+      - note.id
+      - note.title
+      - note.status
+      - note.scope
+      - note.forced_by
+
+  - type: table
+    name: Briefs
+    filters:
+      and:
+        - note.type == "design-brief"
+    order:
+      - note.id
+      - note.project
+      - note.surface
+      - note.status
+      - note.dna

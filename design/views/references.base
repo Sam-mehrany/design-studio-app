@@ -1,0 +1,83 @@
+filters:
+  and:
+    - note.type == "design-ref"
+
+properties:
+  note.archetype:
+    displayName: Archetype
+  note.imagery_dep:
+    displayName: Needs photo
+  note.rtl:
+    displayName: RTL
+  note.cost:
+    displayName: Cost
+  note.verdict:
+    displayName: Verdict
+  note.kind:
+    displayName: Kind
+  note.status:
+    displayName: Status
+
+views:
+  - type: cards
+    name: Gallery
+    image: note.image
+    order:
+      - file.name
+      - note.verdict
+      - note.archetype
+
+  - type: table
+    name: All references
+    order:
+      - file.name
+      - note.kind
+      - note.archetype
+      - note.imagery_dep
+      - note.rtl
+      - note.cost
+      - note.verdict
+      - note.status
+
+  - type: cards
+    name: Review queue
+    image: note.image
+    filters:
+      and:
+        - note.status == "unreviewed"
+    order:
+      - file.name
+      - note.verdict
+      - note.confidence
+
+  - type: table
+    name: Adopt — shipped only
+    filters:
+      and:
+        - note.verdict == "adopt"
+        - note.kind == "shipped"
+    order:
+      - file.name
+      - note.archetype
+      - note.facets
+
+  - type: table
+    name: Survives without photography
+    filters:
+      and:
+        - note.imagery_dep == "none"
+    order:
+      - file.name
+      - note.archetype
+      - note.verdict
+
+  - type: table
+    name: RTL-safe and cheap
+    filters:
+      and:
+        - note.rtl == "clean"
+        - note.cost == "low"
+    order:
+      - file.name
+      - note.archetype
+      - note.verdict
