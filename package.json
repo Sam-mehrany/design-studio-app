@@ -5,11 +5,11 @@
   "description": "Browse, classify and link your design reference library.",
   "main": "main.js",
   "author": "Sam Mehrany",
-  "license": "UNLICENSED",
-  "private": true,
+  "license": "MIT",
   "scripts": {
     "sync": "node sync-server.js",
     "start": "npm run sync && electron .",
+    "serve": "npm run sync && node server/studio.js --port 7391",
     "dist": "npm run sync && electron-builder --win nsis --x64"
   },
   "devDependencies": {

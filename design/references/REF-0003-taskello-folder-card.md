@@ -46,6 +46,7 @@ metadata:
   originSessionId: 9ac498eb-4145-4d11-8650-5cc9c8cfbe60
 sam_reaction: like
 status: reviewed
+concept: component
 ---
 
 # REF-0003 — Taskello, dark folder-tab collection card
@@ -125,6 +126,8 @@ metaphor** (a folder tab, ticket notch, or card cut-out). `E.RAD.asymmetric` com
 but describes radii, not a shaped outline. Sam to decide whether it deserves an `E.*` term.
 
 Original filename `paste-20261124104232.png`.
+
+**Duplicate noted 2026-11-24:** the same Taskello card ("Daily memo / Notes & Journaling", "05 Doc / 1270 Notes", red/orange blurred photo header, black panel, off-white ground) was pinned again on the Pinterest board "UI Idea" (private) as pin 1 of that board — download file browser-download-20261124T172614.142744352Z-19-939a09bb738359a9273c89a58dc8d1bd.jpg (pin https://de.pinterest.com/pin/1024498615378071269/) (1350x1430, same 0.944 aspect as this record's 1200×1271 image). Same card at a different export resolution, not a new design — no new REF was created for it; this record covers both.
 
 **Related:** REF-0002 (dark, neutral-only, no accent, flat ~2× hero), the same restraint at
 screen scale.

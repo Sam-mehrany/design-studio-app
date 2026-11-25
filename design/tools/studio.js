@@ -227,6 +227,7 @@ function graph() {
   return {
     nodes: all.map((r) => ({
       id: r.id, title: r.title, kind: r.kind, verdict: r.verdict,
+      concept: lib.conceptOf(r),
       archetype: lib.asList(r.archetype)[0] || '', image: r.image,
       reaction: r.sam_reaction || '', terms: lib.asList(r.facets).length,
     })),
@@ -250,6 +251,15 @@ function claudeBinary() {
     candidates.push(path.join(home, '.local', 'bin', 'claude'));
   }
   for (const c of candidates) { try { if (fs.existsSync(c)) return c; } catch { /* keep looking */ } }
+  // A Claude CLI on PATH (for example /usr/bin/claude on Linux) — resolve it so
+  // the ingest log names the real binary instead of the bare command. Only the
+  // bare name is matched, so on Windows claude.cmd is never picked up here and
+  // the behaviour there is unchanged.
+  for (const dir of String(process.env.PATH || '').split(path.delimiter)) {
+    if (!dir) continue;
+    const c = path.join(dir, 'claude');
+    try { if (fs.existsSync(c) && fs.statSync(c).isFile()) return c; } catch { /* keep looking */ }
+  }
   return 'claude';
 }
 

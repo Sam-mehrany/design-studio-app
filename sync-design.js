@@ -14,9 +14,32 @@
 const fs = require('fs');
 const path = require('path');
 
-const SRC = process.env.DESIGN_VAULT || 'D:/Memory/design';
+/**
+ * Where the live vault is: DESIGN_VAULT wins; otherwise D:/Memory/design when
+ * it exists (Windows). When there is no vault at all — for example on a machine
+ * that only has this repo — there is nothing to copy and the design/ snapshot
+ * in the repo is left untouched instead of being wiped.
+ */
+function pickVault() {
+  if (process.env.DESIGN_VAULT) return process.env.DESIGN_VAULT;
+  const win = 'D:/Memory/design';
+  if (fs.existsSync(path.join(win, '00-model.md'))) return win;
+  return null;
+}
+
+const SRC = pickVault();
 const OUT = path.join(__dirname, 'design');
 const CHECK = process.argv.includes('--check');
+
+if (!SRC) {
+  console.error('sync-design: no vault found — set DESIGN_VAULT to the design folder, or run where D:/Memory/design exists.\n' +
+    'The design/ snapshot in this repo is left untouched.');
+  process.exit(1);
+}
+if (path.resolve(SRC) === path.resolve(OUT)) {
+  console.error('sync-design: DESIGN_VAULT points at this repo\'s own design/ folder — nothing to copy.');
+  process.exit(1);
+}
 
 // Generated or machine-local; never worth committing.
 const SKIP_DIRS = new Set(['node_modules', '.git', 'inbox']);

@@ -11,7 +11,20 @@
 const fs = require('fs');
 const path = require('path');
 
-const SRC = process.env.DESIGN_TOOLS || 'D:/Memory/design/tools';
+/**
+ * Where the server comes from: DESIGN_TOOLS wins; otherwise the vault's
+ * D:/Memory/design/tools when it exists (Windows); otherwise the design/tools
+ * snapshot in this repo, so the app builds with no setup on a machine that has
+ * no vault at all. The vault stays the single source of truth wherever it is.
+ */
+function pickTools() {
+  if (process.env.DESIGN_TOOLS) return process.env.DESIGN_TOOLS;
+  const win = 'D:/Memory/design/tools';
+  if (fs.existsSync(path.join(win, 'studio.js'))) return win;
+  return path.join(__dirname, 'design', 'tools');
+}
+
+const SRC = pickTools();
 const OUT = path.join(__dirname, 'server');
 
 if (!fs.existsSync(path.join(SRC, 'studio.js'))) {

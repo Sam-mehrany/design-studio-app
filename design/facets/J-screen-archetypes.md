@@ -96,6 +96,29 @@ Never in a reference board. Always in a shipped product.
 | `J.ACC.privacy` | Privacy controls | Comprehensible consequence per switch |
 | `J.ACC.notifications` | Notification preferences | Granularity versus a usable list |
 
+## J.PRES — Presentation & decks
+
+*Not a screen.* The artefact is a slide or a deck of slides, made to be presented,
+not used. A slide borrows a landing's headline and a dashboard's numerals, which is
+exactly why it must never be filed as either: group it with the other slides, or the
+graph will keep stitching decks into landing clusters on shared style terms.
+
+| ID | Archetype | Central tension |
+|---|---|---|
+| `J.PRES.slide` | Single slide | One idea per slide versus the whole story |
+| `J.PRES.deck` | Multi-slide deck | Narrative arc versus each slide standing alone |
+
+## J.REF — Non-screen reference imagery
+
+*Not a screen either.* Photography, 3D renders, still life and mood imagery kept as
+reference material. They carry no archetype job, so they carry this term instead of
+an empty archetype — an empty archetype is how 19 records ended up ungrouped and
+clustered only on shared colour terms.
+
+| ID | Archetype | Central tension |
+|---|---|---|
+| `J.REF.imagery` | Imagery / mood reference | Atmosphere versus anything transferable to a screen |
+
 ## How to use this facet
 
 1. **Tag every reference** with its archetype on intake.

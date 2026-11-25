@@ -51,6 +51,11 @@ async function resolveVault() {
   const saved = readSettings().vault;
   if (looksLikeVault(saved)) return saved;
   if (looksLikeVault(DEFAULT_VAULT)) { writeSettings({ ...readSettings(), vault: DEFAULT_VAULT }); return DEFAULT_VAULT; }
+  // No Windows vault on this machine: fall back to the design/ snapshot shipped
+  // in the repo, so the app opens with no setup instead of asking for a folder
+  // that does not exist here.
+  const bundled = path.join(__dirname, 'design');
+  if (looksLikeVault(bundled)) { writeSettings({ ...readSettings(), vault: bundled }); return bundled; }
 
   const { response } = await dialog.showMessageBox({
     type: 'question',

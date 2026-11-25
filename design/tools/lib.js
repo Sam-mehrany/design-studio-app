@@ -5,14 +5,39 @@
  * Both the MCP server (design-mcp.js) and the studio server (studio.js) import this,
  * so there is exactly one parser and it cannot drift. Zero dependencies.
  *
- * Root resolves to this file's parent folder (design/), overridable with DESIGN_VAULT
- * so tests can point at a fixture vault instead of the real one.
+ * Root resolves to the vault this file belongs to, overridable with DESIGN_VAULT
+ * so tests can point at a fixture vault instead of the real one. Resolution order:
+ * DESIGN_VAULT, then the folder this file lives in (design/tools/ in the vault,
+ * server/ in the packaged app — which is not a vault), then the design/ snapshot
+ * next to it. On Windows the vault is D:/Memory/design and the first two find it;
+ * on a machine with no vault the repo's own design/ snapshot is the working copy,
+ * so the app runs with no setup and no environment variables.
  */
 
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = process.env.DESIGN_VAULT || path.resolve(__dirname, '..');
+/** A folder counts as the vault when it holds the model and the two libraries. */
+const looksLikeVault = (dir) => {
+  try {
+    return fs.existsSync(path.join(dir, '00-model.md'))
+      && fs.existsSync(path.join(dir, 'facets'))
+      && fs.existsSync(path.join(dir, 'references'));
+  } catch { return false; }
+};
+
+function resolveRoot() {
+  if (process.env.DESIGN_VAULT) return path.resolve(process.env.DESIGN_VAULT);
+  const here = path.resolve(__dirname, '..');
+  if (looksLikeVault(here)) return here;
+  // Reached only when this file is the bundled copy in server/: the snapshot
+  // is the design/ folder next to server/, i.e. one level up from here.
+  const snapshot = path.resolve(__dirname, '..', 'design');
+  if (looksLikeVault(snapshot)) return snapshot;
+  return here;
+}
+
+const ROOT = resolveRoot();
 const FACETS = path.join(ROOT, 'facets');
 
 const FACET_NAMES = {
@@ -491,6 +516,59 @@ function nextId(kind, prefix) {
   return `${prefix}-${String((n.length ? Math.max(...n) : 0) + 1).padStart(4, '0')}`;
 }
 
+/* ---------- the concept: what artefact is depicted ---------- */
+
+/**
+ * The concept is the first thing image analysis must decide, before any style
+ * term: what design artefact is actually in the picture, ignoring staging
+ * (a laptop frame, a rock, a poster border). Five values, nothing else:
+ *
+ *   web       — a website / landing / dashboard / pricing page (desktop screen)
+ *   mobile    — a phone or watch app screen
+ *   component — one isolated card / component, not a full screen
+ *   slide     — one or more presentation slides / a deck
+ *   imagery   — no UI design at all: photo, 3D render, still life, mood, gradient
+ *
+ * Why this exists: the old graph mixed all five. A slide and a landing share
+ * headline type, a single accent and a two-tier scale, so flat facet cosine
+ * linked them at 0.4–0.6 while two slides with different colours scored lower
+ * and never linked. Style terms describe how something looks; the concept
+ * describes what it is — and grouping must be by what it is first.
+ *
+ * Stored as a `concept:` frontmatter field on each REF. Records that predate
+ * the field fall back to inference below, and records with no usable signal
+ * get no concept at all — which is a wildcard, never a wrong group.
+ */
+const CONCEPTS = ['web', 'mobile', 'component', 'slide', 'imagery', 'mockup'];
+const CONCEPT_LABELS = {
+  web: 'Web design', mobile: 'Mobile app', component: 'Component',
+  slide: 'Slide / deck', imagery: 'Imagery / mood', mockup: 'Mockup / device in environment',
+};
+/** Fixed vector weights: the concept and the archetype are grouping signals, not style. */
+const CONCEPT_WEIGHT = 7.0;
+const ARCHETYPE_WEIGHT = 2.5;
+/** Partial credit for sharing an archetype dimension (J.PRES.slide ~ J.PRES.deck). */
+const ARCHETYPE_DIM_WEIGHT = 1.5;
+
+function conceptOf(r) {
+  const raw = String((r && r.concept) || '').trim().toLowerCase();
+  if (CONCEPTS.includes(raw)) return raw;
+  // Back-compat inference for records written before the concept field existed.
+  const title = String((r && r.title) || '').toLowerCase();
+  const arch = asList(r && r.archetype);
+  const facets = asList(r && r.facets);
+  const has = (t) => facets.includes(t) || arch.includes(t);
+  // A device shown in an environment is a mockup reference, whatever is on its
+  // screen: the image was saved for the device presentation, not the UI.
+  if (/\b(laptop|monitor|tablet|iphone|ipad|macbook|phone)\b/.test(title)) return 'mockup';
+  if (arch.length === 0 && (has('F.IMG.render-3d') || has('F.IMG.photography'))) return 'imagery';
+  if (/presentation deck|slides?\b.*\bdeck|deck\b/.test(title) && /slide|deck|presentation/.test(title)) return 'slide';
+  if (/slide/.test(title) && has('J.DATA.report')) return 'slide';
+  if (has('K.DEV.handheld') || has('K.DEV.wearable')) return 'mobile';
+  if (/card\b/.test(title) && !/landing|dashboard|screen|app\b/.test(title)) return 'component';
+  return '';
+}
+
 /* ---------- the vector space ---------- */
 
 /**
@@ -498,13 +576,19 @@ function nextId(kind, prefix) {
  * `archetype` terms. Terms are IDF-weighted, so a term shared by every record counts for
  * little and a rare one counts for a lot — then cosine similarity between records.
  *
- * This is a real vector space and, unlike an image embedding, every number in it is
+ * Two additions make the grouping follow the concept, not just the style:
+ *  - the concept is a pseudo-term with a fixed heavy weight (CONCEPT_WEIGHT),
+ *    so two slides share a large component of their vectors whatever their colours;
+ *  - archetype terms carry a fixed boost (ARCHETYPE_WEIGHT) on top of their IDF,
+ *    so the screen's job counts for more than one more shared type scale.
+ *
+ * This is still a real vector space and, unlike an image embedding, every number in it is
  * explainable: two records are close *because they share these named terms*.
  */
 function vectors(refs) {
   const docs = refs.map((r) => {
     const set = new Set([...asList(r.facets), ...asList(r.archetype)].map((t) => String(t).trim()).filter(Boolean));
-    return { id: r.id, terms: set };
+    return { id: r.id, terms: set, concept: conceptOf(r), archetype: new Set(asList(r.archetype).map((t) => String(t).trim()).filter(Boolean)) };
   });
   const N = docs.length || 1;
   const df = new Map();
@@ -515,9 +599,20 @@ function vectors(refs) {
   for (const d of docs) {
     const v = new Map();
     let sq = 0;
-    for (const t of d.terms) { const w = idf.get(t) || 0; v.set(t, w); sq += w * w; }
+    for (const t of d.terms) {
+      const w = (idf.get(t) || 0) * (d.archetype.has(t) ? ARCHETYPE_WEIGHT : 1);
+      v.set(t, w); sq += w * w;
+    }
+    // Archetype dimension (J.PRES, J.ACQ, …): a slide and a deck share a job family
+    // even when their exact archetype terms differ.
+    for (const a of d.archetype) {
+      const dim = 'dim:' + String(a).split('.').slice(0, 2).join('.');
+      v.set(dim, (v.get(dim) || 0) + ARCHETYPE_DIM_WEIGHT);
+      sq += ARCHETYPE_DIM_WEIGHT * ARCHETYPE_DIM_WEIGHT;
+    }
+    if (d.concept) { v.set('concept:' + d.concept, CONCEPT_WEIGHT); sq += CONCEPT_WEIGHT * CONCEPT_WEIGHT; }
     const norm = Math.sqrt(sq) || 1;
-    vecs.set(d.id, { v, norm, terms: d.terms });
+    vecs.set(d.id, { v, norm, terms: d.terms, concept: d.concept });
   }
   return { vecs, idf, df, N: docs.length };
 }
@@ -530,6 +625,18 @@ function cosine(a, b) {
   return dot / (a.norm * b.norm);
 }
 
+/**
+ * Same-concept pairs keep their score. Cross-concept pairs are discounted:
+ * a slide and a landing that share a style can still link, but only if the
+ * resemblance is strong (adjusted score clears the threshold anyway). A record
+ * with no concept is a wildcard — no bonus, no penalty.
+ */
+function adjustedScore(a, b, raw) {
+  if (!a || !b) return 0;
+  if (!a.concept || !b.concept || a.concept === b.concept) return raw;
+  return raw * 0.4;
+}
+
 /** Nearest neighbours of one reference, with the shared terms that explain each score. */
 function neighbours(refId, refs, limit = 8) {
   const { vecs } = vectors(refs);
@@ -539,7 +646,7 @@ function neighbours(refId, refs, limit = 8) {
   const out = [];
   for (const [id, vec] of vecs) {
     if (id === refId) continue;
-    const score = cosine(self, vec);
+    const score = adjustedScore(self, vec, cosine(self, vec));
     if (score <= 0) continue;
     const shared = [...self.terms].filter((t) => vec.terms.has(t));
     out.push({ id, score, shared, title: (byId.get(id) || {}).title || '' });
@@ -554,7 +661,7 @@ function edges(refs, threshold = 0.25, maxPerNode = 4) {
   const scored = [];
   for (let i = 0; i < ids.length; i++) {
     for (let j = i + 1; j < ids.length; j++) {
-      const s = cosine(vecs.get(ids[i]), vecs.get(ids[j]));
+      const s = adjustedScore(vecs.get(ids[i]), vecs.get(ids[j]), cosine(vecs.get(ids[i]), vecs.get(ids[j])));
       if (s >= threshold) scored.push({ a: ids[i], b: ids[j], score: s });
     }
   }
@@ -618,5 +725,5 @@ module.exports = {
   frontmatter, bodyOf, records, asList, section, setFrontmatter,
   findTermRow, setStance, MARKS,
   queueEntry, appendQueue, readQueue, removeQueueEntry, nextId, writeRefIndex,
-  vectors, cosine, neighbours, edges, candidatePrefs,
+  vectors, cosine, neighbours, edges, candidatePrefs, conceptOf, CONCEPTS, CONCEPT_LABELS,
 };

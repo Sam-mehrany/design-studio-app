@@ -127,9 +127,12 @@ applies to. Written only from evidence. `preferences/_template.md`.
 what it costs, and where it binds. A DDR can contradict a PREF if a constraint forces it —
 it must then say so. `decisions/_template.md`.
 
-**REF** — one analysed artefact: a screenshot, app, site or print piece. Scored on the
-facets, plus the three fields that kill most references — imagery dependency, RTL
-survivability, render/download cost — and a verdict. `references/_template.md`.
+**REF** — one analysed artefact: a screenshot, app, site or print piece. It carries a
+`concept` — web, mobile, component, slide, imagery or mockup — stating what artefact the image
+depicts; a computer, phone or tablet shown in an environment is a mockup, not the UI on its
+screen, so mockups never mix with web UI references. The graph groups by concept first, so a
+slide is never filed as a landing. Scored on the facets, plus the three fields that kill most references —
+imagery dependency, RTL survivability, render/download cost — and a verdict.
 
 **BRIEF** — a project's target as facet terms, with its constraints and its rejects. This is
 what a design gets produced *from* and critiqued *against*. `briefs/_template.md`.

@@ -45,10 +45,23 @@ For each image, in batches of 5–10:
 
 ### Reading order for one image
 
-Archetype before aesthetics. What a screen *is for* determines whether its choices are good.
+Concept before archetype before aesthetics. What the image *is* determines everything
+downstream — including which cluster the graph puts it in.
+
+0. **`concept` — what artefact is depicted, judged from the image.** Pick exactly one:
+   - `mockup` — a computer, phone, tablet or other digital device shown in an environment (on a desk, in hands, on a stand, in a scene). The image was saved for the device presentation, not the UI on its screen — so a laptop showing a landing page is a mockup, not web, and a floating-phone marketing shot is a mockup, not mobile. If the screen fills the frame edge-to-edge with no device hardware or environment visible, it is not a mockup: judge the UI.
+   - `web` — a website / landing / dashboard / pricing page, shown flat (screen fills the frame, no device hardware or environment in shot)
+   - `mobile` — a phone or watch app screen, shown flat
+   - `component` — one isolated card / component, not a full screen
+   - `slide` — one or more presentation slides / a deck (even when a slide shows a web hero or a dashboard inside it — the artefact is the slide). A slide photographed on a laptop in a scene is a mockup, not a slide.
+   - `imagery` — no UI design at all: a photograph, 3D render, still life, mood image, or a blank gradient screen with no device in shot. A blank monitor on a rock is a mockup (the device is the subject), not imagery.
+   Write it as `concept:` in the frontmatter. This is what the graph groups by: two records with different concepts almost never link, however similar their style terms are. Getting this wrong is how slides ended up clustered with landings in Nov 2026 (REF-0023/0064/0066 were filed as landings; they are slides) — and how device mockups ended up mixed with web UI (REF-0021/0027/0030/0033 were filed as web; they are mockups). When in doubt between two concepts, say so in `## Notes` and pick the one the image was saved for: the device presentation, or the UI itself.
 
 1. **`J` archetype.** What job is this screen doing? If it is a marketing shot of an app
-   rather than a screen, say so — it is a `J.ACQ.landing`, not the product.
+   rather than a screen, say so — it is a `J.ACQ.landing`, not the product. A slide takes
+   `J.PRES.slide` / `J.PRES.deck` (plus a second archetype for its subject, e.g.
+   `J.DATA.report` for a data slide); imagery with no UI takes `J.REF.imagery`, never an
+   empty archetype.
 2. **Shipped or concept?** A real product has empty rows, long labels, status bars, odd data.
    A concept shot has three perfect data points and no edge cases. This drives `kind`, and a
    concept shot can never be `verdict: adopt` on its own.

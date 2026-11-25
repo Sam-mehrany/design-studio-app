@@ -4,6 +4,7 @@ id: REF-0000
 title: ""
 source: ""
 kind: shipped          # shipped | concept | print | brand
+concept: web           # web | mobile | component | slide | imagery | mockup — the artefact depicted; a device in an environment is mockup, see the ingest skill step 0
 captured: 2026-01-01
 image: library/.png    # relative to design/references/
 archetype: []          # J terms, e.g. [J.CORE.capture]

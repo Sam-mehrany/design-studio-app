@@ -1,53 +1,154 @@
-# Design Studio — desktop app
+# Design Studio
 
-An installable Windows app around the design reference library, so it opens like software
-rather than a page in a browser. The library itself stays in the vault at
-`D:\Memory\design`; this is only the shell.
+A design-reference library that thinks in **concepts**, not folders.
 
-**This project lives on `E:`** — `node_modules` is ~557 MB and `dist/` adds a few hundred
-more, which `D:` cannot spare: on 24 Nov 2026 it had 9.3 GB free against 55.6 GB on `E:`.
-Electron's own caches still go to `%LOCALAPPDATA%` on `C:`, which had 41.8 GB.
+Design Studio is a personal library for the designs you collect — landing pages,
+app screens, components, slides, photos, 3D renders, device mockups — analysed on
+a shared vocabulary, linked by similarity, and browsable as a gallery and as a
+graph. It is built for designers who want their references to stay searchable and
+arguable, not piled in a folder called `inspo-final-v2`.
 
-## Build
+It is not a moodboard app and not a Figma plugin. It is a small local app around a
+plain-text vault: every reference is a Markdown file, every judgement is a facet
+term, and Git is the version history.
+
+## What it does
+
+- **Gallery** — every reference as a card, with its verdict (`adopt` / `adapt` /
+  `reject`), its archetype, and its concept. Filter by archetype, verdict, kind,
+  imagery dependency, RTL survivability, or cost.
+- **Graph** — an Obsidian-style graph of the whole library. Nodes are references,
+  edges are measured similarity. The graph is full-bleed, has no entrance
+  animation, and every node is draggable — drag one to pin it where you want it.
+  Colour is the concept: web, mobile, component, slide, imagery, mockup.
+  Hover a node (desktop) or press it (phone) and a preview card appears with the
+  thumbnail, title, concept, verdict and link count.
+- **Queue** — references that have been analysed but not yet reviewed. Reviewing
+  is where taste gets recorded: what you like becomes a preference record, with
+  evidence, not a vibe.
+- **Inbox** — drop images here and Muse analyses them into the library (see
+  [SETUP-MUSE.md](SETUP-MUSE.md)).
+- **Candidates** — preference statements waiting to be written up from your
+  review reasons.
+
+### Concept grouping — why the graph finally makes sense
+
+Every reference carries a `concept:` field stating what artefact the image
+depicts: `web`, `mobile`, `component`, `slide`, `imagery`, or `mockup`. A computer,
+phone or tablet shown in an environment is a **mockup**, not the UI on its screen —
+a laptop showing a landing page is a mockup, not web. A slide showing a dashboard
+is a slide, not a landing.
+
+The graph groups by concept first. Similarity in `design/tools/lib.js` weights the
+concept at **7.0**, the screen archetype at **2.5**, and discounts cross-concept
+pairs by **×0.4**, so a slide and a landing with the same type and accent no longer
+link just because they look alike.
+
+Verified on 25 Nov 2026, on the library shipped with this repo:
+
+| Concept | Refs |
+|---|---:|
+| Web | 17 |
+| Mobile | 8 |
+| Component | 15 |
+| Slide | 3 |
+| Imagery | 19 |
+| Mockup | 28 |
+| **Total** | **90** |
+
+**319 graph edges, 1 cross-concept link** — REF-0094 (a slide) to REF-0047 (web),
+which is honest: REF-0094 is a screenshot of the gallery showing REF-0047. Before
+concept grouping there were 121 cross-concept links out of 279 edges.
+
+## How it works, technically
+
+- **No database.** The vault is files: Markdown records with YAML frontmatter
+  (`design/references/REF-NNNN-*.md`), a 12-facet taxonomy (`design/facets/`
+  A–L: style, structure, colour, typography, shape, imagery, motion, content,
+  components, archetypes, platform, evaluation), preference records
+  (`design/preferences/PREF-NNNN.md`) and decision records
+  (`design/decisions/DDR-NNNN.md`). The model is documented in
+  [`design/00-model.md`](design/00-model.md).
+- **Similarity is measured, not guessed.** `design/tools/lib.js` builds an
+  IDF-weighted facet vector per reference and links pairs whose cosine similarity
+  clears a 0.25 threshold (max 4 edges per node). Concept and archetype are
+  heavy pseudo-terms in that vector.
+- **Zero-dependency server.** `design/tools/studio.js` is plain Node — no
+  framework, no database — serving the UI and a JSON API on port **7391**, bound
+  to `127.0.0.1` only. Writes require the `X-Studio` header plus Host/Origin
+  checks, so a page in another browser cannot write to your library.
+- **Electron shell.** `main.js` forks the server with Electron's bundled Node and
+  opens it as a desktop window. No separate Node install is needed for the
+  packaged app. `npm run dist` builds a Windows installer (NSIS).
+- **Git is the backup.** The vault is a git repo. Ingest commits after a batch;
+  every reference, preference and decision is diffable text.
+- **Muse AI does the analysis.** Drop images in `design/references/inbox/` and
+  Muse (via Claude Code) classifies each one with the ingest skill in
+  `design/tools/design-ingest-SKILL.md`: concept first, then archetype, then
+  facets A–H — with measured values (real hex codes, real contrast ratios)
+  instead of adjectives. Records land `unreviewed`; nothing becomes a stated
+  preference until you review it.
+- **Phone use.** The same vault can be served to a Muse Space through a host
+  bridge — one vault, no separate copy. See [SETUP-MUSE.md](SETUP-MUSE.md).
+
+## Quick start
 
 ```bash
-npm install          # once
-npm run dist         # -> dist/Design Studio Setup <version>.exe
+git clone https://github.com/Sam-mehrany/design-studio-app.git
+cd design-studio-app
+npm install        # once (installs Electron + electron-builder for the desktop app)
+npm run sync       # copy the server out of design/tools/ into server/
+npm run serve      # start the server on http://127.0.0.1:7391
 ```
 
-`npm start` runs it unpackaged for development.
+Open <http://127.0.0.1:7391> in a browser. For the desktop app instead:
 
-Both scripts run `sync-server.js` first, which copies `lib.js`, `studio.js` and `ui/` out of
-`D:/Memory/design/tools` into `server/`. **The vault is the single source of truth** — edit
-the server there, not here, then rebuild. Override the source with `DESIGN_TOOLS` if the
-vault moves.
+```bash
+npm start          # unpackaged Electron window
+npm run dist       # Windows installer -> dist/Design Studio Setup <version>.exe
+```
 
-`make-icon.js` draws `build/icon.png` from source using only Node's zlib — the facet grid
-with one accent cell on a tonal surface, matching the studio's own language rather than a
-stock icon. Run it if the icon changes; `server/` and `build/` are generated and gitignored.
+**Full guide for a new Muse AI account — including how Muse analyses images,
+how the graph works, and troubleshooting — is in
+[SETUP-MUSE.md](SETUP-MUSE.md).** It also covers macOS/Linux, where to point the
+app at your own vault, and what to do when the port is busy.
 
-## How it runs
+## Add your own references
 
-The Electron main process:
+1. Drop image files into `design/references/inbox/`.
+2. Ask Muse to ingest them (it follows `design/tools/design-ingest-SKILL.md`).
+3. Review them in the Queue view. What you like or reject becomes a PREF record
+   with your words as evidence.
+4. Commit: the vault is a git repo, so `git add design && git commit` is the
+   backup.
 
-1. finds the library — a remembered path, else `D:\Memory\design`, else it asks, and
-   validates that the folder really holds `facets/` and `references/`;
-2. forks `server/studio.js` with `ELECTRON_RUN_AS_NODE`, so the server runs on Electron's
-   bundled Node with no separate install, bound to **127.0.0.1** on the first free port
-   from 7391;
-3. waits for `/api/overview` to answer, then opens the window on it.
+## About the library in this repo
 
-The server is killed when the app quits, a single-instance lock stops a second copy, and any
-link that is not the local studio opens in the real browser. **File → Change library folder**
-repoints it and relaunches.
+This repo ships the code, the taxonomy, and the **90 text reference records**
+analysed from Sam Mehrany's own collection — so you can open it and see a real,
+working library, not an empty shell.
 
-Because the server keeps its `X-Studio` header requirement and its Host/Origin checks, the
-app is no more exposed than the command-line version — a page in another browser still
-cannot write to the library.
+It does **not** ship the 90 reference images (about 16 MB of PNG/JPG files).
+They are other designers' published work, collected as screenshots, and they are
+not included in this push. After cloning, the gallery shows an
+"Image not in this copy" placeholder for images you don't have. The intended
+start for a new designer is: clone, run it, drop **your own** images into
+`design/references/inbox/` and let Muse ingest them.
 
-## Why Electron
+If you are Sam, running this from the original Windows machine: a normal
+`git push` from that machine carries the full library including images, because
+that machine holds the full history.
 
-WebView2 158 is present on this machine, so Tauri was an option and would ship a far smaller
-binary — but it needs a Rust toolchain, which is a large install for one app. Electron costs
-about 200 MB installed and needs nothing else. Its caches go to `%LOCALAPPDATA%` on `C:`,
-which matters here: as of 24 Nov 2026 `D:` had only 9.3 GB free against 41.8 GB on `C:`.
+## Sam's setup, as one example
+
+Sam runs the live vault from a folder on his Windows machine (in his case
+`D:\Memory\design`) and keeps this repo as a snapshot of it, refreshed with
+`node sync-design.js` before a push. You don't need that layout — the `design/`
+folder shipped in this repo *is* a complete vault, and the app falls back to it
+when no other vault is found. Point the app at your own folder with the
+`DESIGN_VAULT` environment variable or **File → Change library folder…** in the
+desktop app.
+
+## License
+
+MIT — see [LICENSE](LICENSE). Copyright 2026 Sam Mehrany.
