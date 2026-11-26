@@ -9,12 +9,12 @@ by law, by bandwidth or by content model — must fail it on purpose.
 
 | ID | Term | One line | Stance |
 |---|---|---|---|
-| `F.IMG.photography` | Photography | Photographic subject matter carries the composition | req DDR-0001 — excluded where UGC or bandwidth forbids it |
+| `F.IMG.photography` | Photography | Photographic subject matter carries the composition | – |
 | `F.IMG.illustration` | Illustration | Drawn material, 2D | – |
-| `F.IMG.render-3d` | 3D render | Modelled, lit, rendered objects | ✓ PREF-0006 |
+| `F.IMG.render-3d` | 3D render | Modelled, lit, rendered objects | – |
 | `F.IMG.abstract-shape` | Abstract shape | Geometry and gradient as visual material | – |
-| `F.IMG.data-as-image` | Data as image | The chart or the numbers *are* the visual interest | – the fallback when imagery is unavailable |
-| `F.IMG.ui-as-image` | UI as image | Screens and components shown as the hero subject | ✓ PREF-0005 |
+| `F.IMG.data-as-image` | Data as image | The chart or the numbers *are* the visual interest | – |
+| `F.IMG.ui-as-image` | UI as image | Screens and components shown as the hero subject | – |
 | `F.IMG.none` | None | Type, colour and structure only | – |
 
 ## F.DEP — Imagery dependency
@@ -47,7 +47,7 @@ The scoring field for every reference record.
 | `F.ILL.isometric` | Isometric | Technical axonometric scenes | – |
 | `F.ILL.editorial` | Editorial | Conceptual, textured, illustrator-authored | – |
 | `F.ILL.technical-diagram` | Technical diagram | Annotated, measured, explanatory | – |
-| `F.ILL.silhouette` | Silhouette | Body or object outlines; the no-photo substitute | – the stand-in where photography is barred |
+| `F.ILL.silhouette` | Silhouette | Body or object outlines; the no-photo substitute | – |
 | `F.ILL.mascot` | Mascot | A character carrying the brand | – |
 
 ## F.ICON — Icon style
@@ -66,27 +66,27 @@ The scoring field for every reference record.
 
 | ID | Term | One line | Stance |
 |---|---|---|---|
-| `F.ICON-SYS.single-weight` | Single weight | One stroke weight across the whole set | req |
-| `F.ICON-SYS.grid-drawn` | Grid-drawn | Every icon built on the same pixel grid and keylines | req |
+| `F.ICON-SYS.single-weight` | Single weight | One stroke weight across the whole set | – |
+| `F.ICON-SYS.grid-drawn` | Grid-drawn | Every icon built on the same pixel grid and keylines | – |
 | `F.ICON-SYS.optical-sizes` | Optical sizes | Separate drawings for small and large use | – |
-| `F.ICON-SYS.mixed-sources` | Mixed sources | Icons from several libraries | – the fastest way to look unsystematic |
+| `F.ICON-SYS.mixed-sources` | Mixed sources | Icons from several libraries | – |
 
 ## F.ICON-RTL — Directionality
 
 | ID | Term | One line | Stance |
 |---|---|---|---|
-| `F.ICON-RTL.flip-directional` | Flip directional | Arrows, chevrons, progress and undo mirror | req |
-| `F.ICON-RTL.keep-metaphor` | Keep metaphors | Clocks, search, media transport do **not** mirror | req |
+| `F.ICON-RTL.flip-directional` | Flip directional | Arrows, chevrons, progress and undo mirror | – |
+| `F.ICON-RTL.keep-metaphor` | Keep metaphors | Clocks, search, media transport do **not** mirror | – |
 
 ## F.3D — Render style
 
 | ID | Term | One line | Stance |
 |---|---|---|---|
-| `F.3D.rendered-real` | Genuinely rendered | Modelled and path-traced; real light and material | ✓ PREF-0006 |
-| `F.3D.faked-css` | Faked in CSS | Layered divs imitating depth | ✗ PREF-0006 |
-| `F.3D.clay` | Clay | Matte, untextured volumes | – as an AI or lighting base |
-| `F.3D.product-studio` | Product studio | Studio-lit hero object, reflective floor | ✓ PREF-0004 |
-| `F.3D.exploded-layers` | Exploded layers | Stacked planes showing a system's parts | ✓ PREF-0005 |
+| `F.3D.rendered-real` | Genuinely rendered | Modelled and path-traced; real light and material | – |
+| `F.3D.faked-css` | Faked in CSS | Layered divs imitating depth | – |
+| `F.3D.clay` | Clay | Matte, untextured volumes | – |
+| `F.3D.product-studio` | Product studio | Studio-lit hero object, reflective floor | – |
+| `F.3D.exploded-layers` | Exploded layers | Stacked planes showing a system's parts | – |
 
 ## F.COST — Render and download cost
 

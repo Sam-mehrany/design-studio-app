@@ -5,18 +5,6 @@ normal (0010 was never issued).
 
 | ID | Title | Polarity | Scope |
 |---|---|---|---|
-| [PREF-0001](PREF-0001-no-quality-downgrades.md) | Never solve a design problem by lowering ambition | reject | all work |
-| [PREF-0002](PREF-0002-one-border-language.md) | One border language; status never a side stripe | reject | product UI |
-| [PREF-0003](PREF-0003-tight-composition.md) | Compositions fill their frame; no scattered empty space | reject | brand graphics |
-| [PREF-0004](PREF-0004-tonal-depth-never-white-void.md) | Tonal depth and a staged environment; never a white void | like | brand & presentation |
-| [PREF-0005](PREF-0005-must-present-the-subject.md) | Visuals must present the subject, not decorate around it | reject | brand graphics |
-| [PREF-0006](PREF-0006-real-render-over-faked-depth.md) | Genuinely rendered material over faked depth | like | brand & hero visuals |
-| [PREF-0007](PREF-0007-rtl-is-primary.md) | RTL is a first-class edition, not a mirror | like | Persian-audience work |
-| [PREF-0008](PREF-0008-dual-theme-counterpart.md) | A light counterpart gets made, not derived | conditional | brand graphics |
-| [PREF-0009](PREF-0009-type-pairing.md) | Neutral grotesque for Latin, IRANSans-class for Persian | like | all work |
-| [PREF-0011](PREF-0011-first-person-singular.md) | First person singular; never a corporate "we" | like | own portfolio & case studies |
-| [PREF-0012](PREF-0012-keep-the-real-vocabulary.md) | Redesign the layout, not the words | like | redesigns |
-| [PREF-0013](PREF-0013-design-file-and-code-in-sync.md) | The design file and the build change together | like | projects with both |
 
 ## What this set does and does not cover
 

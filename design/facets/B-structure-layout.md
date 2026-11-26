@@ -10,7 +10,7 @@ with it" problems are B problems.
 |---|---|---|---|
 | `B.GRID.columnar` | Columnar | Classic 12/16-column with gutters | – |
 | `B.GRID.modular` | Modular | Rows and columns both fixed; a true module matrix | – |
-| `B.GRID.bento` | Bento | Unequal tiles in a tight mosaic, each a self-contained cell | ✓ PREF-0004 (Gemini tile grid) |
+| `B.GRID.bento` | Bento | Unequal tiles in a tight mosaic, each a self-contained cell | – |
 | `B.GRID.single-column` | Single column | One stream; mobile-native, list-led | – |
 | `B.GRID.split` | Split / pane | Two or three persistent regions, independently scrolled | – |
 | `B.GRID.asymmetric` | Asymmetric | Deliberate imbalance as the composition | – |
@@ -23,7 +23,7 @@ with it" problems are B problems.
 |---|---|---|---|
 | `B.DEN.sparse` | Sparse | One idea per screen; space is the message | – |
 | `B.DEN.moderate` | Moderate | Comfortable default; most consumer apps | – |
-| `B.DEN.dense` | Dense | Many values visible at once, deliberately | req for loggers, rosters, panels |
+| `B.DEN.dense` | Dense | Many values visible at once, deliberately | – |
 | `B.DEN.compressed` | Compressed | Operator-grade; maximum data per pixel | – |
 
 Density is a **requirement of the job**, not a style choice (see facet J). A dense screen
@@ -38,7 +38,7 @@ five at once, which produces no hierarchy at all.
 |---|---|---|---|
 | `B.HIER.size` | Size | Scale contrast ranks elements | – |
 | `B.HIER.weight` | Weight | Type weight ranks elements | – |
-| `B.HIER.colour` | Colour | Hue or intensity ranks elements | – only when colour is otherwise semantic |
+| `B.HIER.colour` | Colour | Hue or intensity ranks elements | – |
 | `B.HIER.position` | Position | Reading order and anchoring rank elements | – |
 | `B.HIER.enclosure` | Enclosure | Containers group and rank | – |
 | `B.HIER.space` | Space | Proximity alone groups; no containers | – |
@@ -51,16 +51,16 @@ five at once, which produces no hierarchy at all.
 | `B.CONT.seams` | Seams | Hairline dividers, no containers | – |
 | `B.CONT.bare` | Bare | Grouping by space alone | – |
 | `B.CONT.tray` | Tray / panel | Persistent surfaces holding transient content | – |
-| `B.CONT.nested` | Nested | Containers inside containers | – card-in-card reads as a different system |
+| `B.CONT.nested` | Nested | Containers inside containers | – |
 
 ## B.SPACE — Whitespace strategy
 
 | ID | Term | One line | Stance |
 |---|---|---|---|
-| `B.SPACE.tight` | Tight | Minimum to separate; content-forward | ✓ PREF-0003 |
+| `B.SPACE.tight` | Tight | Minimum to separate; content-forward | – |
 | `B.SPACE.rhythmic` | Rhythmic | A strict scale, repeated; space is the grid | – |
 | `B.SPACE.generous` | Generous | Space as the luxury signal | – |
-| `B.SPACE.scattered` | Scattered | Large gaps without system; "room left over" | ✗ PREF-0003 |
+| `B.SPACE.scattered` | Scattered | Large gaps without system; "room left over" | – |
 
 `B.SPACE.scattered` is a named failure mode, not a style: it is what generous space becomes
 when the composition does not fill its frame on purpose.
@@ -69,9 +69,9 @@ when the composition does not fill its frame on purpose.
 
 | ID | Term | One line | Stance |
 |---|---|---|---|
-| `B.FLOW.ltr` | LTR primary | Designed left-to-right, mirrored later if ever | – only for non-Persian work |
-| `B.FLOW.rtl` | RTL primary | Designed right-to-left first; LTR is the mirror | ✓ PREF-0007 |
-| `B.FLOW.bidi` | True bidirectional | Both are first-class; numerals and units handled explicitly | ✓ PREF-0007 |
+| `B.FLOW.ltr` | LTR primary | Designed left-to-right, mirrored later if ever | – |
+| `B.FLOW.rtl` | RTL primary | Designed right-to-left first; LTR is the mirror | – |
+| `B.FLOW.bidi` | True bidirectional | Both are first-class; numerals and units handled explicitly | – |
 | `B.FLOW.z` | Z-pattern | Marketing flow across alternating sides | – |
 | `B.FLOW.f` | F-pattern | Scanning flow for text-heavy pages | – |
 

@@ -5,7 +5,6 @@ Template: [`_template.md`](_template.md). Superseded, never edited away.
 
 | ID | Decision | Status | Scope |
 |---|---|---|---|
-| [DDR-0001](DDR-0001-effects-budget.md) | No live blur, mesh gradients or decorative raster in the Iranian products | accepted | health-app, all surfaces |
 
 ## When something is a DDR rather than a PREF
 

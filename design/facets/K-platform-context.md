@@ -20,9 +20,9 @@ network in Persian with one hand and chalk on the fingers. Context is a specific
 
 | ID | Term | One line | Note |
 |---|---|---|---|
-| `K.TIER.flagship` | Flagship | Everything renders; no visual budget pressure | |
-| `K.TIER.midrange` | Mid-range | Blur, heavy shadow and large renders cost frames | the realistic default |
-| `K.TIER.low` | Low-end | Avoid compositing effects entirely | |
+| `K.TIER.flagship` | Flagship | Everything renders; no visual budget pressure | – |
+| `K.TIER.midrange` | Mid-range | Blur, heavy shadow and large renders cost frames | – |
+| `K.TIER.low` | Low-end | Avoid compositing effects entirely | – |
 
 ## K.INPUT — Input modality
 

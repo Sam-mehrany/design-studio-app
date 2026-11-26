@@ -88,11 +88,11 @@ most hostile-context object in the system — and it is the one no reference boa
 
 | ID | Term | One line | Stance |
 |---|---|---|---|
-| `I.DISC.pattern-exists-first` | Pattern exists first | A new visual treatment must already exist in the system, or it does not go in | ✓ PREF-0002 |
-| `I.DISC.one-concept-one-component` | One concept, one component | No two components doing the same job | req |
-| `I.DISC.tokens-not-values` | Tokens, never raw values | Components reference tokens only | req |
+| `I.DISC.pattern-exists-first` | Pattern exists first | A new visual treatment must already exist in the system, or it does not go in | – |
+| `I.DISC.one-concept-one-component` | One concept, one component | No two components doing the same job | – |
+| `I.DISC.tokens-not-values` | Tokens, never raw values | Components reference tokens only | – |
 | `I.DISC.composition-over-variants` | Composition over variants | Compose small parts rather than multiply props | – |
-| `I.DISC.sync-both-sides` | Sync both sides | A change lands in the code *and* the design file in the same pass | ✓ PREF-0013 |
+| `I.DISC.sync-both-sides` | Sync both sides | A change lands in the code *and* the design file in the same pass | – |
 
 ## Open questions
 

@@ -10,15 +10,15 @@ retrofitted — see `D.FA`.
 | ID | Term | One line | Stance |
 |---|---|---|---|
 | `D.FACE.geometric-sans` | Geometric sans | Circular forms, even weight; Futura/Poppins lineage | – |
-| `D.FACE.neo-grotesque` | Neo-grotesque | Neutral, tight apertures; Helvetica/Inter lineage | ✓ PREF-0009 |
+| `D.FACE.neo-grotesque` | Neo-grotesque | Neutral, tight apertures; Helvetica/Inter lineage | – |
 | `D.FACE.grotesque` | Grotesque | Earlier, quirkier, more character than neutral | – |
 | `D.FACE.humanist-sans` | Humanist sans | Calligraphic skeleton, open apertures; warmer | – |
 | `D.FACE.transitional-serif` | Transitional serif | Editorial workhorse serif | – |
 | `D.FACE.didone` | Didone | Extreme thick-thin; fashion register | – |
 | `D.FACE.slab` | Slab | Blocky serifs; sturdy, technical | – |
-| `D.FACE.mono` | Monospace | Fixed pitch; code and data register | – for values and IDs, not body |
+| `D.FACE.mono` | Monospace | Fixed pitch; code and data register | – |
 | `D.FACE.display` | Display | For one size only; not a text face | – |
-| `D.FACE.variable` | Variable font | One file, continuous axes | – good, but subset cost on constrained networks |
+| `D.FACE.variable` | Variable font | One file, continuous axes | – |
 
 ## D.PAIR — Pairing logic
 
@@ -63,7 +63,7 @@ The most under-specified part of most design systems, and the one that breaks da
 
 | ID | Term | One line | Stance |
 |---|---|---|---|
-| `D.NUM.tabular` | Tabular (monospaced) | Fixed-width figures; columns align, values stop jittering | req wherever numbers update or stack |
+| `D.NUM.tabular` | Tabular (monospaced) | Fixed-width figures; columns align, values stop jittering | – |
 | `D.NUM.proportional` | Proportional | Natural spacing; fine in prose, wrong in tables | – |
 | `D.NUM.lining` | Lining | Cap-height figures | – |
 | `D.NUM.oldstyle` | Oldstyle | Figures with ascenders and descenders; text-like | – |
@@ -101,13 +101,13 @@ Constraints, not preferences. Each one has broken a real layout.
 
 | ID | Term | One line | Stance |
 |---|---|---|---|
-| `D.FA.weight-range` | Real weight range | The Persian face must ship the weights the scale needs; many ship two | req |
-| `D.FA.no-italic` | No italic | Persian has no italic; emphasis comes from weight or colour | req |
-| `D.FA.no-smallcaps` | No small caps | The all-caps micro-label pattern has no Persian equivalent | req |
-| `D.FA.taller-leading` | Taller leading | Persian needs more line height than Latin at the same size | req |
-| `D.FA.subset-selfhost` | Subset and self-host | Persian faces are heavy; subset and host domestically | req |
-| `D.FA.latin-fallback` | Latin fallback pairing | A Latin face chosen to sit with the Persian one, not defaulted | req |
-| `D.FA.iransans-class` | IRANSans-class | The established neutral Persian UI face family | ✓ PREF-0009 |
+| `D.FA.weight-range` | Real weight range | The Persian face must ship the weights the scale needs; many ship two | – |
+| `D.FA.no-italic` | No italic | Persian has no italic; emphasis comes from weight or colour | – |
+| `D.FA.no-smallcaps` | No small caps | The all-caps micro-label pattern has no Persian equivalent | – |
+| `D.FA.taller-leading` | Taller leading | Persian needs more line height than Latin at the same size | – |
+| `D.FA.subset-selfhost` | Subset and self-host | Persian faces are heavy; subset and host domestically | – |
+| `D.FA.latin-fallback` | Latin fallback pairing | A Latin face chosen to sit with the Persian one, not defaulted | – |
+| `D.FA.iransans-class` | IRANSans-class | The established neutral Persian UI face family | – |
 
 ## Open questions
 
