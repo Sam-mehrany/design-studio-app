@@ -134,10 +134,7 @@ const refs = () => lib.records('design-ref');
 
 /** Models offered for analysis. Ordered cheapest-first within each tier. */
 const MODELS = [
-  { id: 'claude-haiku-5-5', name: 'Haiku 5.5', note: 'fastest and cheapest — fine for a big first pass' },
-  { id: 'claude-sonnet-5-5', name: 'Sonnet 5.5', note: 'balanced' },
-  { id: 'claude-opus-5-5', name: 'Opus 5.5', note: 'best judgment on design — the default', default: true },
-  { id: 'claude-fable-5-1', name: 'Fable 5.1', note: 'most capable, slowest, priciest' },
+  { id: 'hark', name: 'Hark', note: 'analysed by Hark in your chat, following design-ingest', default: true },
 ];
 const MODEL_IDS = new Set(MODELS.map((m) => m.id));
 
@@ -271,6 +268,13 @@ function startIngest(model) {
   if (!count) return { ok: false, error: 'the inbox is empty' };
   if (model && !MODEL_IDS.has(model)) return { ok: false, error: `unknown model: ${model}` };
   const chosen = model || MODELS.find((m) => m.default).id;
+  if (chosen === 'hark') {
+    const req = path.join(ROOT, 'references', 'inbox', '.hark-request.json');
+    fs.writeFileSync(req, JSON.stringify({ requested: new Date().toISOString(), count }, null, 2));
+    ingestJob = { running: false, started: Date.now(), count, log: [`queued ${count} image(s) for Hark`], code: 0, model: 'Hark',
+      hint: null, queued: true };
+    return { ok: true, count, queued: true };
+  }
   const log = [];
   ingestJob = { running: true, started: Date.now(), count, log, code: null, model: chosen };
   const args = [
@@ -353,6 +357,8 @@ function readBody(req, limit = 32 * 1024 * 1024) {
  * require a custom header on writes — a custom header forces a preflight, which we fail.
  */
 const ALLOWED_HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`, `[::1]:${PORT}`]);
+// Extra hosts (e.g. a tunnel) allowed via env, comma-separated.
+for (const h of String(process.env.STUDIO_EXTRA_HOSTS || '').split(',').map(x => x.trim()).filter(Boolean)) ALLOWED_HOSTS.add(h);
 
 function guard(req, res) {
   const host = String(req.headers.host || '');
@@ -430,7 +436,7 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, ingestJob
         ? {
           running: ingestJob.running, count: ingestJob.count, code: ingestJob.code,
-          model: ingestJob.model || null,
+          model: ingestJob.model || null, queued: !!ingestJob.queued,
           hint: ingestJob.hint || null, log: ingestJob.log.join('\n').slice(-4000),
         }
         : { running: false });

@@ -861,7 +861,7 @@ function inboxView() {
   const paint = (data, status) => {
     const running = status && status.running;
     const n = data.count;
-    const chosen = modelChoice() || (MODELS || []).find((m) => m.default)?.id || '';
+    const chosen = ((MODELS || []).some((m) => m.id === modelChoice()) ? modelChoice() : null) || (MODELS || []).find((m) => m.default)?.id || '';
 
     const header = el('div', { class: 'inbox-head' }, [
       el('div', {}, [
@@ -922,6 +922,7 @@ function inboxView() {
               body: JSON.stringify({ model: chosen }),
             });
             if (!out.ok) { toast(out.error, true); return; }
+            if (out.queued) { toast(`Sent ${out.count} image${out.count === 1 ? '' : 's'} to Hark. Message Hark "analyze" in your chat.`); refreshInbox(); return; }
             toast(`Analysing ${out.count} image${out.count === 1 ? '' : 's'} — this takes a few minutes.`);
             pollIngest();
             refreshInbox();
@@ -931,10 +932,9 @@ function inboxView() {
     ]);
 
     const explain = el('p', { class: 'inbox-foot' }, [
-      'Runs ', el('code', { class: 'path', text: 'claude -p /design-ingest' }),
-      ' on your plan: it reads each image, proposes a classification and leaves a record in the Queue for you to react to. ',
-      'If the CLI cannot sign in on its own, run ', el('code', { class: 'path', text: '/design-ingest' }),
-      ' inside a Claude Code session instead.',
+      'Hark reads each image with the ', el('code', { class: 'path', text: 'design-ingest' }),
+      ' rules: concept first, measured colour and contrast, and a record left in the Queue for you to react to. ',
+      'After pressing Analyse, message Hark "analyze" in your chat to start the run.',
     ]);
 
     // replaceChildren() stringifies a null argument into the text "null", so filter first.
@@ -946,7 +946,7 @@ function inboxView() {
       status && status.code !== null && status.code !== undefined && !running
         ? el('div', { class: 'hint ' + (status.code === 0 ? 'info' : 'warn') },
           [status.code === 0
-            ? `Last run finished${status.model ? ' on ' + status.model : ''}. Check the Queue tab.`
+            ? (status.queued ? `Queued for Hark. Message Hark "analyze" in your chat; results land in the Queue tab.` : `Last run finished${status.model ? ' on ' + status.model : ''}. Check the Queue tab.`)
             : (status.hint || `Last run failed (exit ${status.code}). Run /design-ingest inside a Claude Code session instead.`)])
         : null,
       status && status.log
