@@ -19,6 +19,7 @@ const fs = require('fs');
 const path = require('path');
 const { execFile } = require('child_process');
 const lib = require('./lib.js');
+const auth = require('./auth.js');
 
 const ROOT = lib.ROOT;
 
@@ -36,8 +37,17 @@ const UI = (() => {
 })();
 const PORT = (() => {
   const i = process.argv.indexOf('--port');
-  return i !== -1 ? Number(process.argv[i + 1]) : 7391;
+  if (i !== -1) return Number(process.argv[i + 1]);
+  return Number(process.env.PORT) || 7391;
 })();
+/** 127.0.0.1 for the desktop app; 0.0.0.0 (STUDIO_HOST) when hosted so the platform's proxy can reach it. */
+const HOST = process.env.STUDIO_HOST || '127.0.0.1';
+const PUBLIC = !['127.0.0.1', 'localhost', '::1'].includes(HOST);
+if (PUBLIC && !auth.enabled) {
+  console.error('Refusing to listen on ' + HOST + ' without a password. Set STUDIO_PASSWORD_HASH ' +
+    '(node design/tools/set-password.js) or STUDIO_PASSWORD.');
+  process.exit(1);
+}
 
 /* ---------- path safety ---------- */
 
@@ -358,6 +368,9 @@ function readBody(req, limit = 32 * 1024 * 1024) {
  */
 const ALLOWED_HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`, `[::1]:${PORT}`]);
 // Extra hosts (e.g. a tunnel) allowed via env, comma-separated.
+// Render, Railway and Fly publish the app's own hostname; trust it without extra setup.
+for (const h of [process.env.RENDER_EXTERNAL_HOSTNAME, process.env.RAILWAY_PUBLIC_DOMAIN,
+  process.env.FLY_APP_NAME && `${process.env.FLY_APP_NAME}.fly.dev`]) if (h) ALLOWED_HOSTS.add(h);
 for (const h of String(process.env.STUDIO_EXTRA_HOSTS || '').split(',').map(x => x.trim()).filter(Boolean)) ALLOWED_HOSTS.add(h);
 
 function guard(req, res) {
@@ -382,9 +395,39 @@ const server = http.createServer(async (req, res) => {
   let url;
   try { url = new URL(req.url, 'http://127.0.0.1'); } catch { json(res, 400, { error: 'bad url' }); return; }
   const route = url.pathname;
+  if (route === '/healthz') return json(res, 200, { ok: true });  // platform health checks use internal hosts
   if (!guard(req, res)) return;
 
   try {
+    /* --- sign-in --- */
+    if (route === '/login' || route === '/login.html') {
+      if (!auth.enabled || auth.isAuthed(req)) { res.writeHead(302, { location: '/' }); return res.end(); }
+      return serveFile(res, path.join(UI, 'login.html'));
+    }
+    if (route === '/api/login' && req.method === 'POST') {
+      if (!auth.enabled) return json(res, 200, { ok: true });
+      const wait = auth.lockedFor(req);
+      if (wait) return json(res, 429, { error: `Too many attempts. Try again in ${Math.ceil(wait / 60)} min.` });
+      const body = JSON.parse((await readBody(req, 1 << 12)).toString('utf8') || '{}');
+      if (!auth.checkPassword(body.password)) {
+        auth.recordMiss(req);
+        return json(res, 401, { error: 'Wrong password.' });
+      }
+      auth.clearMisses(req);
+      res.setHeader('set-cookie', auth.sessionCookie(req));
+      return json(res, 200, { ok: true });
+    }
+    if (route === '/api/logout' && req.method === 'POST') {
+      res.setHeader('set-cookie', auth.clearCookie(req));
+      return json(res, 200, { ok: true });
+    }
+    if (route === '/api/session') return json(res, 200, { auth: auth.enabled, signedIn: auth.isAuthed(req) });
+    if (!auth.isAuthed(req)) {
+      if (route.startsWith('/api/') || route.startsWith('/img/')) return json(res, 401, { error: 'sign in required' });
+      res.writeHead(302, { location: '/login' + (route === '/' ? '' : `?next=${encodeURIComponent(route)}`) });
+      return res.end();
+    }
+
     /* --- API --- */
     if (route === '/api/overview') return json(res, 200, overview());
     if (route === '/api/refs') return json(res, 200, { refs: refList() });
@@ -474,10 +517,10 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, '127.0.0.1', () => {
+server.listen(PORT, HOST, () => {
   const { count } = inboxCount();
   process.stdout.write(
-    `design-studio on http://127.0.0.1:${PORT}\n` +
+    `design-studio on http://${HOST}:${PORT}${auth.enabled ? '  (login on)' : ''}\n` +
     `  vault:  ${ROOT}\n` +
     `  ui:     ${UI}${UI.startsWith(ROOT) ? '  (live from the vault)' : '  (bundled)'}\n` +
     `  refs:   ${refs().length}    inbox: ${count}    git: ${gitAvailable ? 'yes' : 'no'}\n`

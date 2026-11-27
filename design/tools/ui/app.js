@@ -18,6 +18,7 @@ const el = (tag, attrs = {}, kids = []) => {
 const api = async (p, opts = {}) => {
   // X-Studio forces a CORS preflight on writes, which the server refuses for other origins.
   const r = await fetch(p, { ...opts, headers: { ...(opts.headers || {}), 'X-Studio': '1' } });
+  if (r.status === 401) { location.href = '/login'; throw new Error('sign in required'); }
   const body = await r.json().catch(() => ({ error: `${r.status} ${r.statusText}` }));
   if (!r.ok || body.error) throw new Error(body.error || `${r.status}`);
   return body;
@@ -1095,3 +1096,12 @@ document.addEventListener('keydown', (e) => {
 });
 
 loadAll().then(render);
+
+/* sign out, shown only when the studio has a login */
+fetch('/api/session').then(r => r.json()).then(s => {
+  if (!s.auth) return;
+  const b = document.createElement('button');
+  b.className = 'signout'; b.type = 'button'; b.textContent = 'Sign out';
+  b.onclick = async () => { await api('/api/logout', { method: 'POST' }).catch(() => {}); location.href = '/login'; };
+  document.querySelector('header').appendChild(b);
+}).catch(() => {});

@@ -451,3 +451,11 @@ a { color: var(--accent); }
 @media (prefers-reduced-motion: no-preference) {
   .card, .chip, nav button, .clear, .react button { transition: background 120ms ease, border-color 120ms ease, color 120ms ease; }
 }
+
+/* sign out (hosted studio only) */
+.signout {
+  margin-left: 16px; height: 32px; padding: 0 12px; border-radius: var(--radius);
+  background: transparent; border: 1px solid var(--border); color: var(--on-surface-muted);
+  font: inherit; font-size: 12px; cursor: pointer; flex-shrink: 0;
+}
+.signout:hover { color: var(--on-surface); border-color: var(--border-strong); background: var(--surface-3); }
