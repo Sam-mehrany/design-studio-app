@@ -15,6 +15,7 @@ cost: med
 verdict: adapt
 confidence: med
 status: unreviewed
+sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:12 PM EST (UTC-05:00)
