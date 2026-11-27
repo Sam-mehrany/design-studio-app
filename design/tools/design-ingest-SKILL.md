@@ -38,6 +38,12 @@ For each image, in batches of 5–10:
 6. **Write the record** from `references/_template.md`, frontmatter first.
 7. **Move the image** to `references/library/REF-NNNN.<ext>`, keeping the original filename
    in the record's `## Notes`. Move, don't copy — the inbox should empty.
+   **Pinterest pins** (`pin-<board>-<id>.<ext>` from `tools/pinterest-sync.js`) come with a
+   sidecar `pin-<board>-<id>.json`. Set `source: "Pinterest board '<board>' (<user>)"`, and
+   write `Pin: https://www.pinterest.com/pin/<id>/` plus the outbound link and description into
+   `## Notes` — the pin ID in the record is how the next sync knows the pin is done. Then
+   delete the sidecar. A pin skipped as a near-duplicate still gets its pin URL written into
+   the existing record's Notes, for the same reason.
 8. **Regenerate the index** — `node D:/Memory/design/tools/index-refs.js`. It rewrites the
    table in `references/index.md` from the records. Never edit that table by hand; it sat
    empty through three ingests when it depended on someone remembering.

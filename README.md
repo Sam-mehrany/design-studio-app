@@ -122,6 +122,22 @@ app at your own vault, and what to do when the port is busy.
 4. Commit: the vault is a git repo, so `git add design && git commit` is the
    backup.
 
+### Pull new pins from Pinterest
+
+```bash
+npm run pinterest            # download pins not yet in the library into the inbox
+npm run pinterest -- --dry-run   # only report what is new
+```
+
+`design/tools/pinterest-sync.js` reads your **public** boards (no login or API
+key), compares every pin against the library, and drops only the new ones into
+`design/references/inbox/` with a sidecar `.json` (pin URL, board, outbound
+link). Ingest them as above. A pin is "known" when its ID appears in a REF
+record or in `design/references/pinterest-seen.json`; the same image pinned
+twice is recorded there as a duplicate and not downloaded again. The account
+is remembered in that ledger (`--user NAME` to change it). Each board check
+sees its 50 most recent pins, so run it at least once per 50 new pins per board.
+
 ## About the library in this repo
 
 This repo ships the code, the taxonomy, and the **90 text reference records**
