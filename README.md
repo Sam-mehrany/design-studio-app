@@ -138,6 +138,9 @@ twice is recorded there as a duplicate and not downloaded again. The account
 is remembered in that ledger (`--user NAME` to change it). Each board check
 sees its 50 most recent pins, so run it at least once per 50 new pins per board.
 
+To do the whole loop unattended (sync, analyse each new pin into a record, commit) on a
+daily schedule, with a local model (Ollama) or Claude, see the **[Pinterest agent](agent/README.md)**.
+
 ## About the library in this repo
 
 This repo ships the code, the taxonomy, and the **90 text reference records**

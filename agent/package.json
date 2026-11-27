@@ -1,0 +1,22 @@
+{
+  "name": "design-studio-pinterest-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A hand-written AI agent that ingests new Pinterest pins into the Design Studio vault. Runs on a local model (Ollama) or Claude.",
+  "main": "src/run.js",
+  "scripts": {
+    "start": "node src/run.js",
+    "check": "node src/run.js --check",
+    "preview": "node src/run.js --preview",
+    "compare": "node src/run.js --compare",
+    "doctor": "node src/run.js --doctor",
+    "test": "node test/run-tests.js && node test/adapter-wire-test.js"
+  },
+  "engines": {
+    "node": ">=20.12"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.8.0",
+    "sharp": "0.35.5"
+  }
+}
