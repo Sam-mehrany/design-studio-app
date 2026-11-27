@@ -14,8 +14,7 @@ rtl: risky
 cost: med
 verdict: adapt
 confidence: med
-status: reviewed
-sam_reaction: like
+status: unreviewed
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:12 PM EST (UTC-05:00)
