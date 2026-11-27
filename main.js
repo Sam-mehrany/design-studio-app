@@ -7,7 +7,7 @@
  * Electron's bundled Node, binds to 127.0.0.1 on a free port, and is killed with the app.
  */
 
-const { app, BrowserWindow, dialog, shell, Menu } = require('electron');
+const { app, BrowserWindow, dialog, shell, Menu, nativeTheme } = require('electron');
 const { fork } = require('child_process');
 const net = require('net');
 const path = require('path');
@@ -146,7 +146,8 @@ async function startServer(vault) {
 function createWindow(url) {
   win = new BrowserWindow({
     width: 1440, height: 920, minWidth: 820, minHeight: 600,
-    backgroundColor: '#0b0d10',          // no white flash before the page paints
+    // no flash before the page paints: match the UI's surface for the OS theme
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#151618' : '#f7f8f9',
     title: 'Design Studio',
     autoHideMenuBar: true,
     webPreferences: { nodeIntegration: false, contextIsolation: true, spellcheck: false },

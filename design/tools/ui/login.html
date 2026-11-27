@@ -5,64 +5,82 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Sign in · Design Studio</title>
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('design.theme'); } catch (e) {}
+    if (t !== 'light' && t !== 'dark') t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <style>
-  /* Same tokens as styles.css: dark surface ladder, one orange accent, hairline borders. */
+  /* Same tokens as styles.css: seamed neutral ladder, ink as the only emphasis, hairlines. */
   :root {
-    --rail: #0f0f0f; --bg: #1b1b1d; --surface-3: #242426;
-    --on-surface: #f2f2f3; --on-surface-muted: #9a9a9c; --on-surface-faint: #8e8e90;
-    --border: #2a2a2c; --border-strong: #3a3a3e;
-    --accent: #ff6b00; --on-accent: #141414; --danger: #e04f4f;
-    --radius: 10px; --radius-lg: 14px;
+    color-scheme: light;
+    --surface: #f7f8f9; --surface-2: #ffffff; --sunken: #eef1f4;
+    --line: #e1e4e8; --line-strong: #cdd2d8;
+    --ink: #0b0c0d; --ink-2: #4f5358; --ink-3: #676b71; --on-ink: #ffffff;
+    --bad-fg: #a3363a; --hatch: rgba(11, 12, 13, 0.07);
     --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
     --sans: Inter, -apple-system, "Segoe UI", Helvetica, Arial, IRANSans, Vazirmatn, Tahoma, sans-serif;
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface: #151618; --surface-2: #1c1d20; --sunken: #0f1012;
+    --line: #26282c; --line-strong: #363a40;
+    --ink: #f2f3f4; --ink-2: #a8acb2; --ink-3: #8e9298; --on-ink: #0b0c0d;
+    --bad-fg: #f0a3a3; --hatch: rgba(242, 243, 244, 0.06);
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; }
   body {
-    margin: 0; background: var(--rail); color: var(--on-surface); font: 14px/1.5 var(--sans);
+    margin: 0; color: var(--ink); font: 14px/1.5 var(--sans);
     display: grid; place-items: center; padding: 24px;
+    background-color: var(--sunken);
+    background-image: repeating-linear-gradient(135deg, var(--hatch) 0 1px, transparent 1px 8px);
     -webkit-font-smoothing: antialiased;
   }
   .card {
-    width: 100%; max-width: 380px; background: var(--bg);
-    border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px 28px 28px;
+    width: 100%; max-width: 400px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 32px rgba(0,0,0,.08);
   }
-  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
-  .mark {
-    width: 28px; height: 28px; border-radius: 8px; background: var(--accent);
-    display: grid; place-items: center; color: var(--on-accent); font-weight: 700; font-size: 15px;
-  }
-  .brand b { font-size: 15px; letter-spacing: -0.01em; }
+  .brand { display: flex; align-items: center; height: 60px; padding: 0 28px; border-bottom: 1px solid var(--line); }
+  .brand b { font-size: 17px; font-weight: 700; letter-spacing: 0.06em; }
+  .brand span { margin-left: auto; font: 11px var(--mono); color: var(--ink-3); }
+  .body { padding: 28px; }
   h1 { font-size: 22px; line-height: 1.25; letter-spacing: -0.02em; margin: 0 0 6px; font-weight: 600; }
-  p.sub { margin: 0 0 24px; color: var(--on-surface-muted); }
-  label { display: block; font-size: 12px; color: var(--on-surface-muted); margin-bottom: 6px; }
+  p.sub { margin: 0 0 24px; color: var(--ink-2); }
+  label { display: block; font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 6px; }
   .field { position: relative; }
   input {
-    width: 100%; height: 44px; padding: 0 44px 0 14px; border-radius: var(--radius);
-    background: var(--surface-3); border: 1px solid var(--border-strong); color: var(--on-surface);
+    width: 100%; height: 44px; padding: 0 48px 0 16px; border-radius: 999px;
+    background: var(--surface-2); border: 1px solid var(--line-strong); color: var(--ink);
     font: inherit; outline: none; transition: border-color 120ms ease;
   }
-  input:focus { border-color: var(--accent); }
-  input[aria-invalid="true"] { border-color: var(--danger); }
+  input:focus { border-color: var(--ink); }
+  input[aria-invalid="true"] { border-color: var(--bad-fg); }
   .peek {
-    position: absolute; right: 6px; top: 6px; width: 32px; height: 32px; border: 0; border-radius: 8px;
-    background: transparent; color: var(--on-surface-faint); cursor: pointer; display: grid; place-items: center;
+    position: absolute; right: 6px; top: 6px; width: 32px; height: 32px; border: 0; border-radius: 50%;
+    background: transparent; color: var(--ink-3); cursor: pointer; display: grid; place-items: center;
   }
-  .peek:hover { color: var(--on-surface); background: #2b2b2d; }
-  .err { min-height: 20px; margin: 8px 0 14px; color: var(--danger); font-size: 13px; }
+  .peek:hover { color: var(--ink); background: var(--sunken); }
+  .err { min-height: 20px; margin: 8px 0 14px; color: var(--bad-fg); font-size: 13px; }
   button[type="submit"] {
-    width: 100%; height: 44px; border: 0; border-radius: var(--radius); background: var(--accent);
-    color: var(--on-accent); font: 600 14px var(--sans); cursor: pointer; transition: filter 120ms ease;
+    width: 100%; height: 44px; border: 0; border-radius: 999px; background: var(--ink);
+    color: var(--on-ink); font: 600 14px var(--sans); cursor: pointer; transition: opacity 120ms ease;
   }
-  button[type="submit"]:hover { filter: brightness(1.08); }
+  button[type="submit"]:hover { opacity: .88; }
   button[type="submit"]:disabled { opacity: .6; cursor: default; }
-  .foot { margin-top: 22px; font: 11px var(--mono); color: var(--on-surface-faint); text-align: center; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .foot { padding: 14px 28px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-3); text-align: center; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
   <main class="card">
-    <div class="brand"><div class="mark" aria-hidden="true">S</div><b>Design Studio</b></div>
+    <div class="brand"><b>STUDIO</b><span>design library</span></div>
+    <div class="body">
     <h1>Welcome back</h1>
     <p class="sub">Sign in to your reference library.</p>
     <form id="f" novalidate>
@@ -76,6 +94,7 @@
       <div class="err" id="err" role="alert"></div>
       <button type="submit" id="go">Sign in</button>
     </form>
+    </div>
     <div class="foot">Stays signed in for 30 days on this device</div>
   </main>
 <script>

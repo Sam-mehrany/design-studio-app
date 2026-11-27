@@ -14,6 +14,10 @@ term, and Git is the version history.
 
 ## What it does
 
+- **Overview** — a dashboard of the library: review progress, liked share,
+  RTL-clean and photo-independent shares as gauges, the library by concept,
+  the most-collected archetypes, the newest references up for review and your
+  liked references. Every tile links into a filtered gallery.
 - **Gallery** — every reference as a card, with its verdict (`adopt` / `adapt` /
   `reject`), its archetype, and its concept. Filter by archetype, verdict, kind,
   imagery dependency, RTL survivability, or cost.

@@ -198,6 +198,7 @@ function overview() {
 function refList() {
   return refs().map((r) => ({
     id: r.id, title: r.title, source: r.source, kind: r.kind, image: r.image,
+    concept: lib.conceptOf(r), captured: r.captured || '',
     archetype: lib.asList(r.archetype), facets: lib.asList(r.facets),
     imagery_dep: r.imagery_dep, rtl: r.rtl, cost: r.cost, verdict: r.verdict,
     status: r.status, confidence: r.confidence,

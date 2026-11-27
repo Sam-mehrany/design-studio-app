@@ -4,24 +4,57 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Design Studio</title>
+<script>
+  /* Theme before first paint, so a dark-mode user never sees a light flash.
+     Stored choice wins; otherwise follow the OS. Storage may be blocked — fall through. */
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('design.theme'); } catch (e) {}
+    if (t !== 'light' && t !== 'dark') t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="app">
-  <header>
-    <div class="brand"><b>Studio</b><span id="root">—</span></div>
-    <nav>
-      <button data-view="gallery" aria-current="true">Gallery</button>
-      <button data-view="graph">Graph</button>
-      <button data-view="queue">Queue</button>
-      <button data-view="candidates">Candidates</button>
-      <button data-view="inbox">Inbox</button>
+  <aside class="side" id="side" aria-label="Sections">
+    <div class="side-brand"><span class="logo">STUDIO</span><span class="logo-sub" id="ref-total"></span></div>
+    <nav class="side-nav" id="nav">
+      <div class="nav-group">Library</div>
+      <button data-view="overview"><i data-icon="overview"></i>Overview</button>
+      <button data-view="gallery"><i data-icon="gallery"></i>Gallery</button>
+      <button data-view="graph"><i data-icon="graph"></i>Graph</button>
+      <div class="nav-group">Review</div>
+      <button data-view="queue"><i data-icon="queue"></i>Queue<span class="count" id="count-queue"></span></button>
+      <button data-view="candidates"><i data-icon="candidates"></i>Candidates</button>
+      <div class="nav-group">Intake</div>
+      <button data-view="inbox"><i data-icon="inbox"></i>Inbox<span class="count" id="count-inbox"></span></button>
     </nav>
-    <div class="stats" id="stats"></div>
-  </header>
-  <main id="main"></main>
+    <div class="side-foot" id="side-foot">
+      <div class="vault-mark" aria-hidden="true"><i data-icon="folder"></i></div>
+      <div class="vault-txt"><b>Local vault</b><span id="root">—</span></div>
+    </div>
+  </aside>
+
+  <div class="frame">
+    <header class="top">
+      <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Open navigation"><i data-icon="menu"></i></button>
+      <div class="crumbs"><span class="root">Studio</span><span class="sep"><i data-icon="chevron"></i></span><b id="crumb">Overview</b></div>
+      <label class="search">
+        <i data-icon="search"></i>
+        <input id="q" type="search" placeholder="Search references" autocomplete="off" aria-label="Search references">
+        <kbd>/</kbd>
+      </label>
+      <button class="icon-btn" id="add-btn" type="button" title="Add images to the inbox" aria-label="Add images to the inbox"><i data-icon="upload"></i></button>
+      <input type="file" id="file-in" accept="image/*" multiple hidden>
+      <button class="icon-btn" id="theme-btn" type="button" title="Switch theme" aria-label="Switch theme"><i data-icon="moon"></i></button>
+    </header>
+    <main id="main"></main>
+  </div>
 </div>
 
+<div class="scrim" id="scrim"></div>
 <div class="drop-hint"><div>Drop images to add them to the inbox</div></div>
 <script src="app.js"></script>
 </body>

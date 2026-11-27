@@ -1,7 +1,9 @@
 'use strict';
-/* design-studio front end. No framework, no build step. */
+/* design-studio front end. No framework, no build step.
+   Shell: sidebar (sections) + top bar (breadcrumb, global search, add, theme) + one view.
+   Views: overview (dashboard) · gallery · graph · queue · candidates · inbox. */
 
-const $ = (sel, el = document) => el.querySelector(sel);
+const $ = (sel, root = document) => root.querySelector(sel);
 const el = (tag, attrs = {}, kids = []) => {
   const n = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
@@ -14,6 +16,69 @@ const el = (tag, attrs = {}, kids = []) => {
   for (const k of [].concat(kids)) if (k) n.appendChild(typeof k === 'string' ? document.createTextNode(k) : k);
   return n;
 };
+const frag = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; };
+
+/* ---------- icons: one line family, 1.7 stroke (F.ICON.line) ---------- */
+
+const ICONS = {
+  overview: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>',
+  gallery: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
+  graph: '<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="9" cy="18" r="2.5"/><path d="M8.4 6.5l7.2 1M6.7 8.4l1.6 7.2M16.4 10l-5.7 6.1"/>',
+  queue: '<path d="M4 6h11M4 12h11M4 18h6"/><path d="M14.5 17.5l2.2 2.2 4.3-4.6"/>',
+  candidates: '<path d="M9.5 18h5M10.5 21h3"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.1v.1h5v-.1c0-.8.4-1.6 1.1-2.1A6 6 0 0 0 12 3z"/>',
+  inbox: '<path d="M3 13.5L5.8 5h12.4l2.8 8.5V19a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13.5h5l1 2.5h6l1-2.5h5"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
+  upload: '<path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/>',
+  moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M2.5 12h2M19.5 12h2M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  chevron: '<path d="M9.5 6l6 6-6 6"/>',
+  close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+  arrow: '<path d="M7 17L17 7M8.5 7H17v8.5"/>',
+  logout: '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M9.5 16.5L5 12l4.5-4.5M5 12h10"/>',
+  filter: '<path d="M4 6h16M7 12h10M10 18h4"/>',
+  folder: '<path d="M3.5 7a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
+  heart: '<path d="M12 19.5s-7.5-4.5-7.5-10A4.2 4.2 0 0 1 12 7a4.2 4.2 0 0 1 7.5 2.5c0 5.5-7.5 10-7.5 10z"/>',
+  x: '<path d="M7 7l10 10M17 7L7 17"/>',
+  refs: '<rect x="4" y="3.5" width="13" height="17" rx="2"/><path d="M20 7v11.5a2 2 0 0 1-2 2H8"/><path d="M7.5 8h6M7.5 12h6"/>',
+  check: '<circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.2l2.6 2.6 4.8-5.3"/>',
+  rtl: '<path d="M20 6H8M20 12H4M20 18H10"/><path d="M7 15l-3 3 3 3"/>',
+  photo: '<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 4l17 16"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  fit: '<path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/>',
+  reset: '<path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3L4.5 9"/><path d="M4.5 4.5V9H9"/>',
+  refresh: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3L19.5 9"/><path d="M19.5 4.5V9H15"/>',
+};
+const icon = (name) => frag(`<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ''}</svg>`);
+const hydrateIcons = (root = document) => {
+  for (const i of root.querySelectorAll('i[data-icon]')) i.replaceWith(icon(i.dataset.icon));
+};
+
+/* ---------- concept identity: colour + shape (shape is the secondary encoding) ---------- */
+
+const CONCEPTS = ['web', 'mobile', 'component', 'slide', 'imagery', 'mockup'];
+const SHAPE = { web: 'circle', mobile: 'square', component: 'diamond', slide: 'triangle', imagery: 'tri-down', mockup: 'hexagon', none: 'circle' };
+const SHAPE_PTS = {
+  square: [[-0.86, -0.86], [0.86, -0.86], [0.86, 0.86], [-0.86, 0.86]],
+  diamond: [[0, -1.18], [1.18, 0], [0, 1.18], [-1.18, 0]],
+  triangle: [[0, -1.2], [1.12, 0.78], [-1.12, 0.78]],
+  'tri-down': [[0, 1.2], [1.12, -0.78], [-1.12, -0.78]],
+  hexagon: [0, 1, 2, 3, 4, 5].map((k) => [Math.cos(Math.PI / 6 + k * Math.PI / 3) * 1.08, Math.sin(Math.PI / 6 + k * Math.PI / 3) * 1.08]),
+};
+const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const conceptColour = (c) => cssVar('--c-' + (CONCEPTS.includes(c) ? c : 'none'));
+/** A 12px legend glyph in the concept's colour and shape. Colour comes from CSS, so it follows the theme. */
+function shapeGlyph(c) {
+  const s = SHAPE[CONCEPTS.includes(c) ? c : 'none'];
+  const fill = `var(--c-${CONCEPTS.includes(c) ? c : 'none'})`;
+  const body = s === 'circle'
+    ? `<circle cx="6" cy="6" r="5" fill="${fill}"/>`
+    : `<polygon fill="${fill}" points="${SHAPE_PTS[s].map(([x, y]) => `${(6 + x * 4.6).toFixed(2)},${(6 + y * 4.6).toFixed(2)}`).join(' ')}"/>`;
+  return frag(`<svg class="shape" viewBox="0 0 12 12" aria-hidden="true">${body}</svg>`);
+}
+
+/* ---------- api, toast, images ---------- */
 
 const api = async (p, opts = {}) => {
   // X-Studio forces a CORS preflight on writes, which the server refuses for other origins.
@@ -25,102 +90,320 @@ const api = async (p, opts = {}) => {
 };
 
 function toast(msg, bad) {
-  const t = el('div', { class: 'toast' + (bad ? ' bad' : ''), text: msg });
+  const t = el('div', { class: 'toast' + (bad ? ' bad' : ''), role: bad ? 'alert' : 'status', text: msg });
   document.body.appendChild(t);
   setTimeout(() => t.remove(), bad ? 6000 : 2600);
 }
 
 /**
  * A reference image that is not in this copy of the library (for example a
- * screenshot that was never synced into it) shows a placeholder instead of the
- * browser's broken-image icon. The error listener is attached before src, so a
+ * screenshot that was never synced into it) shows a hatched placeholder instead of
+ * the browser's broken-image icon. The error listener is attached before src, so a
  * cached 404 still reaches it.
  */
 const shotImg = (src, alt, cls) => el('img', {
   onerror: (e) => e.target.replaceWith(el('div', { class: 'shot-missing', text: 'Image not in this copy' })),
-  src, alt, loading: 'lazy', ...(cls ? { class: cls } : {}),
+  src, alt: alt || '', loading: 'lazy', ...(cls ? { class: cls } : {}),
 });
+const thumb = (r, cls = '') => el('div', { class: 'thumb ' + cls }, [r && r.image ? shotImg('/img/' + r.image, '') : el('div', { class: 'shot-missing' })]);
 
 /* ---------- state ---------- */
 
+const VIEWS = { overview: 'Overview', gallery: 'Gallery', graph: 'Graph', queue: 'Queue', candidates: 'Candidates', inbox: 'Inbox' };
 const S = {
-  view: 'gallery',
+  view: VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : 'overview',
   overview: null,
   refs: [],
   selected: null,
   detail: null,
-  filters: { archetype: new Set(), verdict: new Set(), kind: new Set(), imagery_dep: new Set(), rtl: new Set(), cost: new Set(), status: new Set(), reaction: new Set(), term: new Set() },
+  filters: { concept: new Set(), archetype: new Set(), verdict: new Set(), kind: new Set(), imagery_dep: new Set(), rtl: new Set(), cost: new Set(), status: new Set(), reaction: new Set(), term: new Set() },
   search: '',
+  railOpen: false,
 };
 
 const FILTER_FIELDS = [
-  ['archetype', 'Archetype'], ['verdict', 'Verdict'], ['kind', 'Kind'],
+  ['concept', 'Concept'], ['archetype', 'Archetype'], ['verdict', 'Verdict'], ['kind', 'Kind'],
   ['imagery_dep', 'Survives without photo'], ['rtl', 'RTL'], ['cost', 'Cost'],
   ['status', 'Review'], ['reaction', 'My reaction'],
 ];
 const DEP_LABEL = { none: 'yes — no imagery', soft: 'photo is decoration', hard: 'no — collapses' };
 
+/** Facet term id -> display name, from the taxonomy the server already sends. */
+let TERM_NAME = new Map();
+function indexTerms() {
+  TERM_NAME = new Map();
+  for (const f of (S.overview && S.overview.facets) || []) {
+    for (const d of f.dimensions) for (const t of d.terms) TERM_NAME.set(t.id, t.name);
+  }
+}
+const termName = (id) => TERM_NAME.get(id) || id;
+
+const fieldVals = (r, field) => (field === 'archetype' ? r.archetype
+  : field === 'reaction' ? [r.sam_reaction || 'none'] : [r[field]]);
+
 function valuesOf(field) {
   const tally = new Map();
   for (const r of S.refs) {
-    const vals = field === 'archetype' ? r.archetype
-      : field === 'reaction' ? [r.sam_reaction || 'none'] : [r[field]];
-    for (const v of vals) {
+    for (const v of fieldVals(r, field)) {
       if (!v) continue;
       tally.set(v, (tally.get(v) || 0) + 1);
     }
   }
-  return [...tally.entries()].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])));
+  const out = [...tally.entries()];
+  if (field === 'concept') return out.sort((a, b) => CONCEPTS.indexOf(a[0]) - CONCEPTS.indexOf(b[0]));
+  return out.sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])));
 }
 
 function matches(r) {
   for (const [field] of FILTER_FIELDS) {
     const want = S.filters[field];
     if (!want.size) continue;
-    const vals = field === 'archetype' ? r.archetype
-      : field === 'reaction' ? [r.sam_reaction || 'none'] : [r[field]];
-    if (!vals.some((v) => want.has(v))) return false;
+    if (!fieldVals(r, field).some((v) => want.has(v))) return false;
   }
   if (S.filters.term.size && ![...S.filters.term].every((t) => r.facets.includes(t) || r.archetype.includes(t))) return false;
   if (S.search) {
     const q = S.search.toLowerCase();
-    const hay = [r.id, r.title, r.source, ...r.facets, ...r.archetype].join(' ').toLowerCase();
+    const hay = [r.id, r.title, r.source, r.concept, ...r.facets, ...r.archetype, ...r.archetype.map(termName)].join(' ').toLowerCase();
     if (!hay.includes(q)) return false;
   }
   return true;
 }
-
 const filtered = () => S.refs.filter(matches);
+const anyFilter = () => S.search || Object.values(S.filters).some((s) => s.size);
+function clearFilters() { for (const k of Object.keys(S.filters)) S.filters[k].clear(); S.search = ''; $('#q').value = ''; }
+
+/** Jump to the gallery showing exactly one filter value. */
+function showIn(field, value) {
+  clearFilters();
+  S.filters[field].add(value);
+  setView('gallery');
+}
 
 /* ---------- chrome ---------- */
 
-function renderStats() {
+function renderChrome() {
   const c = S.overview ? S.overview.counts : {};
-  const items = [
-    ['refs', c.refs], ['liked', c.liked], ['to review', c.unreviewed], ['inbox', c.inbox],
-  ];
-  $('#stats').replaceChildren(...items.map(([label, n]) =>
-    el('div', { class: 'stat' }, [el('b', { text: String(n ?? '—') }), el('span', { text: label })])));
+  $('#count-queue').textContent = c.unreviewed ? String(c.unreviewed) : '';
+  $('#count-inbox').textContent = c.inbox ? String(c.inbox) : '';
+  $('#ref-total').textContent = c.refs !== undefined ? `${c.refs} refs` : '';
   const root = S.overview ? S.overview.root : '';
   const tail = root.split(/[/\\]/).filter(Boolean).slice(-2).join('/');
-  const node = $('#root');
-  node.textContent = tail ? '…/' + tail : '';
-  node.title = root;
+  $('#root').textContent = tail ? '…/' + tail : '—';
+  $('#root').title = root;
+  $('#crumb').textContent = VIEWS[S.view];
+  for (const b of document.querySelectorAll('#nav button')) b.setAttribute('aria-current', String(b.dataset.view === S.view));
 }
 
 function setView(v) {
   S.view = v;
-  for (const b of document.querySelectorAll('nav button')) {
-    b.setAttribute('aria-current', String(b.dataset.view === v));
-  }
-  render();                       // paint immediately so the tab feels instant
+  S.railOpen = false;
+  document.body.classList.remove('nav-open');
+  try { history.replaceState(null, '', '#' + v); } catch { /* sandboxed viewers */ }
+  render();                       // paint immediately so the section feels instant
   // The library changes on disk underneath us — a record written since page load would
   // otherwise show in Graph (which fetches per open) but not in Gallery (which read the
   // cached list once). Re-read, then repaint if we are still on the same view.
-  loadAll().then(() => { if (S.view === v) render(); });
+  // The graph is skipped: it fetches its own data and a repaint would re-solve the layout.
+  loadAll().then(() => { if (S.view === v && v !== 'graph') render(); else renderChrome(); });
+}
+
+function syncOverlay() {
+  const panelOverlay = S.view === 'gallery' && S.selected && window.innerWidth <= 1280;
+  const railOverlay = S.view === 'gallery' && S.railOpen && window.innerWidth <= 1020;
+  document.body.classList.toggle('overlay', !!(panelOverlay || railOverlay));
+}
+function closeOverlays() {
+  document.body.classList.remove('nav-open');
+  if (S.railOpen) { S.railOpen = false; render(); return; }
+  if (S.selected && window.innerWidth <= 1280) { S.selected = null; S.detail = null; render(); }
+}
+
+/* ---------- overview ---------- */
+
+/** Semicircle meter (REF-0032's gauge): dashed outer guide, soft track, ink arc + knob. */
+function gauge(ratio, value, unit, label) {
+  const p = Math.max(0, Math.min(1, ratio || 0));
+  const R = 86, cx = 110, cy = 112;
+  const th = Math.PI - p * Math.PI;
+  const kx = (cx + R * Math.cos(th)).toFixed(1), ky = (cy - R * Math.sin(th)).toFixed(1);
+  const arc = `M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`;
+  const svg = frag(`<svg viewBox="0 0 220 124" role="img" aria-label="${label}">
+    <path class="outer" d="M 8 ${cy} A 102 102 0 0 1 212 ${cy}" fill="none" stroke-width="1" stroke-dasharray="1.5 5"/>
+    <circle class="end" cx="8" cy="${cy}" r="2.5"/><circle class="end" cx="212" cy="${cy}" r="2.5"/>
+    <path class="track" d="${arc}" fill="none" stroke-width="14" stroke-linecap="round"/>
+    ${p > 0 ? `<path class="val" d="${arc}" fill="none" stroke-width="14" stroke-linecap="round" pathLength="100" stroke-dasharray="${(p * 100).toFixed(2)} 200"/>` : ''}
+    <circle class="knob" cx="${kx}" cy="${ky}" r="6.5" stroke-width="3"/>
+  </svg>`);
+  return el('div', { class: 'gauge' }, [svg, el('div', { class: 'gauge-num' }, [String(value), unit ? el('small', { text: unit }) : null])]);
+}
+
+function kpiTile({ label, sub, ico, ratio, value, unit, aria, go }) {
+  return el('section', { class: 'tile kpi' }, [
+    el('div', { class: 'tile-head' }, [
+      el('div', {}, [el('h2', { text: label }), el('p', { text: sub })]),
+      el('button', { class: 'icon-btn sm', title: `Show ${label.toLowerCase()}`, 'aria-label': `Show ${label.toLowerCase()} in the gallery`, onclick: go }, [icon(ico)]),
+    ]),
+    gauge(ratio, value, unit, aria),
+  ]);
+}
+
+function niceScale(max) {
+  for (const s of [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000]) {
+    if (max / s <= 4) return { step: s, top: Math.max(s, Math.ceil(max / s) * s) };
+  }
+  return { step: max / 4, top: max };
+}
+
+/** Single-series column chart: one ink, hatched hover band, tooltip, click to filter. */
+function columnChart(rows, onPick) {
+  const total = rows.reduce((s, r) => s + r.v, 0) || 1;
+  const { step, top } = niceScale(Math.max(1, ...rows.map((r) => r.v)));
+  const ticks = [];
+  for (let t = 0; t <= top; t += step) ticks.push(t);
+  const tip = el('div', { class: 'tip', hidden: true });
+  const show = (r, i) => {
+    tip.textContent = `${r.label} · ${r.v} ref${r.v === 1 ? '' : 's'} · ${Math.round((r.v / total) * 100)}%`;
+    tip.style.left = ((i + 0.5) / rows.length) * 100 + '%';
+    tip.style.top = (1 - r.v / top) * 100 + '%';
+    tip.hidden = false;
+  };
+  const hide = () => { tip.hidden = true; };
+  return el('div', { class: 'colchart' }, [
+    el('div', { class: 'yaxis', 'aria-hidden': 'true' }, ticks.map((t) => el('span', { style: `bottom:${(t / top) * 100}%`, text: String(t) }))),
+    el('div', { class: 'plot' }, [
+      ...ticks.slice(1).map((t) => el('div', { class: 'gl', style: `bottom:${(t / top) * 100}%` })),
+      el('div', { class: 'cols' }, rows.map((r, i) => el('button', {
+        class: 'col', 'aria-label': `${r.label}: ${r.v} references. Show them.`,
+        onmouseenter: () => show(r, i), onfocus: () => show(r, i), onmouseleave: hide, onblur: hide,
+        onclick: () => onPick(r),
+      }, [el('div', { class: 'bar', style: `height:${(r.v / top) * 100}%` })]))),
+      tip,
+    ]),
+    el('div', { class: 'xaxis', 'aria-hidden': 'true' }, rows.map((r) => el('span', {}, [r.glyph || null, r.label]))),
+  ]);
+}
+
+function overviewView() {
+  const R = S.refs, n = R.length;
+  if (!n) {
+    return el('div', { class: 'dash' }, [el('div', { class: 'empty' }, [
+      el('b', { text: 'The library is empty' }),
+      el('div', { text: 'Paste a screenshot with Ctrl+V or drop image files anywhere on this window. They land in the inbox; run the analysis from there.' }),
+      el('button', { class: 'btn primary', onclick: () => setView('inbox') }, [icon('inbox'), 'Open the inbox']),
+    ])]);
+  }
+  const count = (f) => R.filter(f).length;
+  const reviewed = count((r) => r.status !== 'unreviewed');
+  const liked = count((r) => r.sam_reaction === 'like');
+  const reacted = count((r) => r.sam_reaction);
+  const rtlClean = count((r) => r.rtl === 'clean');
+  const rtlRisky = count((r) => r.rtl === 'risky');
+  const noPhoto = count((r) => r.imagery_dep === 'none');
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+
+  const kpis = [
+    kpiTile({
+      label: 'References', sub: `${reviewed} reviewed · ${n - reviewed} waiting`, ico: 'refs',
+      ratio: reviewed / n, value: n, aria: `Reviewed ${pct(reviewed, n)} percent of ${n} references.`, go: () => setView('gallery'),
+    }),
+    kpiTile({
+      label: 'Liked', sub: reacted ? `${liked} of ${reacted} reactions` : 'No reactions yet', ico: 'heart',
+      ratio: reacted ? liked / reacted : 0, value: liked, aria: `${liked} liked out of ${reacted} reactions.`, go: () => showIn('reaction', 'like'),
+    }),
+    kpiTile({
+      label: 'RTL-clean', sub: `${rtlClean} clean · ${rtlRisky} risky`, ico: 'rtl',
+      ratio: rtlClean / n, value: pct(rtlClean, n), unit: '%', aria: `${pct(rtlClean, n)} percent survive right-to-left cleanly.`, go: () => showIn('rtl', 'clean'),
+    }),
+    kpiTile({
+      label: 'Stands without photo', sub: `${noPhoto} need no imagery`, ico: 'photo',
+      ratio: noPhoto / n, value: pct(noPhoto, n), unit: '%', aria: `${pct(noPhoto, n)} percent work with no imagery.`, go: () => showIn('imagery_dep', 'none'),
+    }),
+  ];
+
+  // concept mix
+  const cRows = CONCEPTS.map((c) => ({ key: c, label: c[0].toUpperCase() + c.slice(1), v: count((r) => r.concept === c), glyph: shapeGlyph(c) }));
+  const conceptTile = el('section', { class: 'tile span-7' }, [
+    el('div', { class: 'tile-head' }, [
+      el('div', {}, [el('h2', { text: 'Library by concept' }), el('p', { text: 'What each image depicts — select a column to open those references' })]),
+      el('button', { class: 'icon-btn sm', title: 'Open the graph', 'aria-label': 'Open the graph', onclick: () => setView('graph') }, [icon('arrow')]),
+    ]),
+    columnChart(cRows, (r) => showIn('concept', r.key)),
+  ]);
+
+  // archetypes
+  const aTally = new Map();
+  for (const r of R) for (const a of r.archetype) aTally.set(a, (aTally.get(a) || 0) + 1);
+  const aTop = [...aTally.entries()].sort((a, b) => b[1] - a[1]).slice(0, 7);
+  const aMax = aTop.length ? aTop[0][1] : 1;
+  const archTile = el('section', { class: 'tile span-5' }, [
+    el('div', { class: 'tile-head' }, [
+      el('div', {}, [el('h2', { text: 'Top archetypes' }), el('p', { text: `The screens you collect most · ${aTally.size} in use` })]),
+    ]),
+    el('div', { class: 'hbars' }, aTop.map(([id, v]) => el('button', {
+      class: 'hbar', title: id, onclick: () => showIn('archetype', id), 'aria-label': `${termName(id)}: ${v} references`,
+    }, [
+      el('span', { class: 'nm' }, [termName(id), el('code', { text: id })]),
+      el('span', { class: 'v', text: String(v) }),
+      el('span', { class: 'trk hatch' }, [el('i', { style: `width:${(v / aMax) * 100}%` })]),
+    ]))),
+  ]);
+
+  // review table
+  const pending = R.filter((r) => r.status === 'unreviewed').sort((a, b) => String(b.id).localeCompare(String(a.id))).slice(0, 6);
+  const tableTile = el('section', { class: 'tile span-7' }, [
+    el('div', { class: 'tile-head' }, [
+      el('div', {}, [el('h2', { text: 'Up for review' }), el('p', { text: pending.length ? 'Newest analysed references with no reaction yet' : 'Every reference has a reaction' })]),
+      pending.length ? el('button', { class: 'btn sm', style: 'margin-left:auto', onclick: () => setView('queue') }, ['View all', icon('arrow')]) : null,
+    ]),
+    pending.length ? el('table', { class: 'tbl' }, [
+      el('thead', {}, [el('tr', {}, [
+        el('th', { text: 'Reference' }), el('th', { class: 'hide-sm', text: 'ID' }), el('th', { class: 'hide-sm', text: 'Concept' }),
+        el('th', { text: 'Verdict' }), el('th', { class: 'hide-sm', text: 'Confidence' }),
+      ])]),
+      el('tbody', {}, pending.map((r) => el('tr', {
+        class: 'row', tabindex: '0',
+        onclick: () => openRef(r.id),
+        onkeydown: (e) => { if (e.key === 'Enter') openRef(r.id); },
+      }, [
+        el('td', {}, [el('div', { class: 'ttl' }, [thumb(r), el('span', { text: r.title || r.id })])]),
+        el('td', { class: 'id hide-sm', text: r.id }),
+        el('td', { class: 'cap hide-sm' }, [el('span', { style: 'display:inline-flex;align-items:center;gap:6px' }, [shapeGlyph(r.concept), r.concept || '—'])]),
+        el('td', {}, [r.verdict ? el('span', { class: 'pill ' + r.verdict, text: r.verdict }) : '—']),
+        el('td', { class: 'cap hide-sm', text: r.confidence || '—' }),
+      ]))),
+    ]) : el('div', { class: 'note', text: 'Nothing waiting. New images go through the inbox.' }),
+  ]);
+
+  // liked
+  const likedRefs = R.filter((r) => r.sam_reaction === 'like').slice(0, 6);
+  const likedTile = el('section', { class: 'tile span-5' }, [
+    el('div', { class: 'tile-head' }, [
+      el('div', {}, [el('h2', { text: 'Liked' }), el('p', { text: 'Your recorded taste, newest first' })]),
+      likedRefs.length ? el('button', { class: 'icon-btn sm', title: 'Show all liked', 'aria-label': 'Show all liked references', onclick: () => showIn('reaction', 'like') }, [icon('arrow')]) : null,
+    ]),
+    likedRefs.length ? el('div', { class: 'plist' }, likedRefs.reverse().map((r) => el('button', { class: 'pitem', onclick: () => openRef(r.id) }, [
+      thumb(r, 'lg'),
+      el('span', { style: 'min-width:0' }, [
+        el('div', { class: 'pt', text: r.title || r.id }),
+        el('div', { class: 'ps', text: `${r.id} · ${termName(r.archetype[0] || '') || '—'}` }),
+      ]),
+      el('span', { class: 'pill', style: 'text-transform:capitalize' }, [shapeGlyph(r.concept), r.concept || '—']),
+    ]))) : el('div', { class: 'note' }, [
+      'No likes yet. React to references in the ',
+      el('a', { href: '#queue', onclick: (e) => { e.preventDefault(); setView('queue'); } }, ['queue']), ' and they collect here.',
+    ]),
+  ]);
+
+  return el('div', { class: 'dash' }, [el('div', { class: 'dash-grid' }, [...kpis, conceptTile, archTile, tableTile, likedTile])]);
 }
 
 /* ---------- gallery ---------- */
+
+function chipLabel(field, v) {
+  if (field === 'imagery_dep') return DEP_LABEL[v] || v;
+  if (field === 'archetype') return termName(v);
+  return String(v);
+}
 
 function railSection(title, field) {
   const vals = valuesOf(field);
@@ -128,7 +411,8 @@ function railSection(title, field) {
   return el('section', {}, [
     el('h3', { text: title }),
     el('div', { class: 'chips' }, vals.map(([v, n]) => el('button', {
-      class: 'chip',
+      class: 'chip', title: field === 'archetype' ? v : null,
+      style: field === 'concept' || field === 'reaction' || field === 'status' ? 'text-transform:capitalize' : null,
       'aria-pressed': String(S.filters[field].has(v)),
       onclick: () => {
         const set = S.filters[field];
@@ -136,82 +420,84 @@ function railSection(title, field) {
         render();
       },
     }, [
-      el('span', { text: field === 'imagery_dep' ? (DEP_LABEL[v] || v) : String(v) }),
+      field === 'concept' ? shapeGlyph(v) : null,
+      el('span', { text: chipLabel(field, v) }),
       el('span', { class: 'n', text: String(n) }),
     ]))),
   ]);
 }
 
 function rail() {
-  const activeTerms = [...S.filters.term];
-  const anyFilter = activeTerms.length || S.search || FILTER_FIELDS.some(([f]) => S.filters[f].size);
-  return el('div', { class: 'rail' }, [
-    el('section', {}, [
-      el('h3', { text: 'Search' }),
-      el('input', {
-        type: 'search', placeholder: 'title, source, term…', value: S.search,
-        oninput: (e) => { S.search = e.target.value; renderContent(); },
-      }),
-      anyFilter ? el('button', {
-        class: 'clear', text: 'Clear all filters',
-        onclick: () => {
-          for (const k of Object.keys(S.filters)) S.filters[k].clear();
-          S.search = '';
-          render();
-        },
-      }) : null,
-    ]),
-    activeTerms.length ? el('section', {}, [
-      el('h3', { text: 'Facet terms' }),
-      el('div', { class: 'chips' }, activeTerms.map((t) => el('button', {
-        class: 'chip', 'aria-pressed': 'true', title: 'remove this term filter',
-        onclick: () => { S.filters.term.delete(t); render(); },
-      }, [el('span', { text: t })]))),
-    ]) : null,
+  return el('aside', { class: 'rail' + (S.railOpen ? ' open' : ''), 'aria-label': 'Filters' }, [
+    el('div', { class: 'rail-close' }, [el('button', {
+      class: 'icon-btn sm', 'aria-label': 'Close filters', onclick: () => { S.railOpen = false; render(); },
+    }, [icon('close')])]),
     ...FILTER_FIELDS.map(([f, label]) => railSection(label, f)),
   ]);
 }
 
 function card(r) {
-  return el('div', {
+  return el('article', {
     class: 'card', 'aria-selected': String(S.selected === r.id), tabindex: '0',
     onclick: () => select(r.id),
     onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(r.id); } },
   }, [
-    el('div', { class: 'shot' }, [r.image ? shotImg('/img/' + r.image, r.title) : null]),
+    el('div', { class: 'shot' }, [r.image ? shotImg('/img/' + r.image, r.title) : el('div', { class: 'shot-missing', text: 'No image' })]),
     el('div', { class: 'meta' }, [
       el('div', { class: 't', text: r.title || r.id }),
-      el('div', { class: 'sub', text: [r.id, r.archetype[0] || ''].filter(Boolean).join(' · ') }),
+      el('div', { class: 'sub' }, [shapeGlyph(r.concept), [r.id, r.concept].filter(Boolean).join(' · ')]),
       el('div', { class: 'badges' }, [
-        r.verdict ? el('span', { class: 'badge ' + r.verdict, text: r.verdict }) : null,
-        r.kind === 'concept' ? el('span', { class: 'badge concept', text: 'concept' }) : null,
-        r.status === 'unreviewed' ? el('span', { class: 'badge unreviewed', text: 'to review' }) : null,
-        r.sam_reaction ? el('span', { class: 'badge ' + r.sam_reaction, text: r.sam_reaction }) : null,
+        r.verdict ? el('span', { class: 'pill ' + r.verdict, text: r.verdict }) : null,
+        r.status === 'unreviewed' ? el('span', { class: 'pill unreviewed', text: 'to review' }) : null,
+        r.sam_reaction === 'like' ? el('span', { class: 'pill like' }, [icon('heart'), 'liked']) : null,
+        r.sam_reaction === 'dislike' ? el('span', { class: 'pill dislike', text: 'not for me' }) : null,
+        r.kind && r.kind !== 'concept' ? el('span', { class: 'pill vio', text: r.kind }) : null,
       ]),
     ]),
   ]);
 }
 
-function galleryContent() {
+function galleryMain() {
   const list = filtered();
-  if (!S.refs.length) {
-    return el('div', { class: 'content' }, [el('div', { class: 'empty' }, [
-      el('b', { text: 'The library is empty' }),
-      el('div', { text: 'Paste a screenshot with Ctrl+V, or drop image files anywhere on this window. They land in the inbox; run the analysis from the Inbox tab.' }),
-    ])]);
-  }
-  if (!list.length) {
-    return el('div', { class: 'content' }, [el('div', { class: 'empty' }, [
-      el('b', { text: 'No references match these filters' }),
-      el('div', { text: `${S.refs.length} in the library. Clear a filter in the rail to widen.` }),
-    ])]);
-  }
-  return el('div', { class: 'content' }, [
-    el('div', { class: 'grid' }, list.map(card)),
+  const terms = [...S.filters.term];
+  const head = el('div', { class: 'page-head' }, [
+    el('h1', { text: 'Gallery' }),
+    el('span', { class: 'sub', text: list.length === S.refs.length ? `${S.refs.length} references` : `${list.length} of ${S.refs.length} references` }),
+    terms.length ? el('div', { class: 'active-terms' }, terms.map((t) => el('button', {
+      class: 'chip', 'aria-pressed': 'true', title: 'Remove this term filter',
+      onclick: () => { S.filters.term.delete(t); render(); },
+    }, [el('span', { text: t }), icon('x')]))) : null,
+    el('div', { class: 'end' }, [
+      el('button', { class: 'btn sm filters-btn', onclick: () => { S.railOpen = true; render(); } }, [icon('filter'), 'Filters']),
+      anyFilter() ? el('button', { class: 'btn sm', onclick: () => { clearFilters(); render(); } }, ['Clear filters']) : null,
+    ]),
   ]);
+  let body;
+  if (!S.refs.length) {
+    body = el('div', { class: 'empty' }, [
+      el('b', { text: 'The library is empty' }),
+      el('div', { text: 'Paste a screenshot with Ctrl+V, or drop image files anywhere on this window. They land in the inbox; run the analysis from the Inbox.' }),
+    ]);
+  } else if (!list.length) {
+    body = el('div', { class: 'empty' }, [
+      el('b', { text: 'No references match' }),
+      el('div', { text: `${S.refs.length} in the library. Clear a filter to widen.` }),
+      el('button', { class: 'btn', onclick: () => { clearFilters(); render(); } }, ['Clear filters']),
+    ]);
+  } else {
+    body = el('div', { class: 'grid' }, list.map(card));
+  }
+  return el('div', { class: 'gal-main' }, [head, body]);
 }
 
 /* ---------- detail ---------- */
+
+function openRef(id) {
+  S.view = 'gallery';
+  S.selected = null;
+  select(id);
+  try { history.replaceState(null, '', '#gallery'); } catch { /* ignore */ }
+}
 
 async function select(id) {
   if (S.selected === id) { S.selected = null; S.detail = null; render(); return; }
@@ -221,7 +507,7 @@ async function select(id) {
   try {
     S.detail = await api('/api/ref/' + encodeURIComponent(id));
   } catch (e) { toast(e.message, true); }
-  render();
+  if (S.selected === id) render();
 }
 
 async function react(id, value) {
@@ -233,7 +519,7 @@ async function react(id, value) {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ sam_reaction: next, status: next ? 'reviewed' : 'unreviewed' }),
     });
-    await loadRefs();
+    await loadAll();
     if (S.detail && S.detail.id === id) S.detail.sam_reaction = next;
     render();
   } catch (e) { toast(e.message, true); }
@@ -251,10 +537,17 @@ async function saveNote(id, text) {
   } catch (e) { toast(e.message, true); }
 }
 
+function reactionSeg(r) {
+  return el('div', { class: 'seg', role: 'group', 'aria-label': 'My reaction' }, [
+    el('button', { class: 'like', 'aria-pressed': String(r.sam_reaction === 'like'), onclick: () => react(r.id, 'like') }, [icon('heart'), 'Like']),
+    el('button', { 'aria-pressed': String(r.sam_reaction === 'dislike'), onclick: () => react(r.id, 'dislike') }, ['Not for me']),
+  ]);
+}
+
 function termRow(t) {
   return el('button', {
-    class: 'term', title: t.definition || '', style: 'cursor:pointer;text-align:left;width:100%',
-    onclick: () => { S.filters.term.add(t.id); setView('gallery'); },
+    class: 'term', title: t.definition || '',
+    onclick: () => { S.filters.term.add(t.id); S.selected = null; S.detail = null; setView('gallery'); },
   }, [
     el('code', { text: t.id }),
     el('span', { class: 'nm', text: t.name || (t.valid ? '' : 'unknown term') }),
@@ -264,57 +557,61 @@ function termRow(t) {
 
 function detailPanel() {
   if (!S.selected) return null;
+  const close = el('button', {
+    class: 'icon-btn sm', 'aria-label': 'Close details', title: 'Close (Esc)',
+    onclick: () => { S.selected = null; S.detail = null; render(); },
+  }, [icon('close')]);
   const d = S.detail;
-  if (!d) return el('div', { class: 'panel' }, [el('div', { class: 'note', text: 'Loading…' })]);
+  if (!d) {
+    return el('aside', { class: 'panel', 'aria-label': 'Reference details' }, [
+      el('div', { class: 'panel-head' }, [el('span', { class: 'id', text: S.selected }), close]),
+      el('div', { class: 'pbody note', text: 'Loading…' }),
+    ]);
+  }
   const r = S.refs.find((x) => x.id === d.id) || d;
-  return el('div', { class: 'panel' }, [
-    el('h2', { text: d.title || d.id }),
-    el('div', { class: 'src', text: [d.id, d.source, d.kind].filter(Boolean).join(' · ') }),
-    d.image ? shotImg('/img/' + d.image, d.title, 'shot-full') : null,
+  const sec = (title, kids) => el('section', { class: 'psec' }, [el('h4', { text: title }), ...[].concat(kids)]);
+  const kv = (k, v) => el('div', {}, [el('dt', { text: k }), el('dd', { text: v || '—' })]);
+  const byId = new Map(S.refs.map((x) => [x.id, x]));
 
-    el('h4', { text: 'My reaction' }),
-    el('div', { class: 'react' }, [
-      el('button', { 'aria-pressed': String(r.sam_reaction === 'like'), text: 'Like', onclick: () => react(d.id, 'like') }),
-      el('button', { class: 'off', 'aria-pressed': String(r.sam_reaction === 'dislike'), text: 'Not for me', onclick: () => react(d.id, 'dislike') }),
+  return el('aside', { class: 'panel', 'aria-label': 'Reference details' }, [
+    el('div', { class: 'panel-head' }, [
+      el('span', { class: 'id', text: d.id }),
+      d.verdict ? el('span', { class: 'pill ' + d.verdict, text: d.verdict }) : null,
+      close,
     ]),
-    el('div', { class: 'hint', text: 'A reaction never changes a facet stance on its own. The reason below is what turns a pattern into a recorded preference.' }),
-    el('textarea', {
-      placeholder: 'Why? One line. "the set rows read at a glance because the weight column is tabular"',
-      value: r.sam_note || '',
-      onchange: (e) => saveNote(d.id, e.target.value),
-    }),
-
-    el('h4', { text: 'Classification' }),
-    el('dl', { class: 'kv' }, [
-      el('dt', { text: 'verdict' }), el('dd', { text: d.verdict || '—' }),
-      el('dt', { text: 'needs photo' }), el('dd', { text: DEP_LABEL[d.imagery_dep] || d.imagery_dep || '—' }),
-      el('dt', { text: 'RTL' }), el('dd', { text: d.rtl || '—' }),
-      el('dt', { text: 'cost' }), el('dd', { text: d.cost || '—' }),
-      el('dt', { text: 'confidence' }), el('dd', { text: d.confidence || '—' }),
-      el('dt', { text: 'status' }), el('dd', { text: d.status || '—' }),
+    el('div', { class: 'pbody' }, [
+      el('h2', { text: d.title || d.id }),
+      el('div', { class: 'src', text: [d.source, d.kind].filter(Boolean).join(' · ') }),
+      d.image ? el('div', { class: 'shot-wrap' }, [shotImg('/img/' + d.image, d.title, 'shot-full')]) : null,
     ]),
-
-    d.archetypeDetail && d.archetypeDetail.length ? el('h4', { text: 'Archetype' }) : null,
-    d.archetypeDetail && d.archetypeDetail.length ? el('div', { class: 'terms' }, d.archetypeDetail.map(termRow)) : null,
-
-    el('h4', { text: `Facet terms (${(d.facetDetail || []).length})` }),
-    el('div', { class: 'terms' }, (d.facetDetail || []).map(termRow)),
-
-    el('h4', { text: 'Nearest in the library' }),
-    (d.neighbours || []).length
+    sec('My reaction', [
+      reactionSeg(r),
+      el('textarea', {
+        placeholder: 'Why? One line. "the set rows read at a glance because the weight column is tabular"',
+        'aria-label': 'Why — the reason behind your reaction',
+        onchange: (e) => saveNote(d.id, e.target.value),
+      }, [r.sam_note || '']),
+      el('p', { class: 'note', style: 'font-size:12px;margin:8px 0 0', text: 'A reaction never changes a facet stance on its own. The reason is what turns a pattern into a recorded preference.' }),
+    ]),
+    sec('Classification', [el('dl', { class: 'kv' }, [
+      kv('Concept', r.concept), kv('Verdict', d.verdict),
+      kv('Needs photo', DEP_LABEL[d.imagery_dep] || d.imagery_dep), kv('RTL', d.rtl),
+      kv('Cost', d.cost), kv('Confidence', d.confidence),
+    ])]),
+    d.archetypeDetail && d.archetypeDetail.length ? sec('Archetype', el('div', { class: 'terms' }, d.archetypeDetail.map(termRow))) : null,
+    sec(`Facet terms · ${(d.facetDetail || []).length}`, el('div', { class: 'terms' }, (d.facetDetail || []).map(termRow))),
+    sec('Nearest in the library', (d.neighbours || []).length
       ? el('div', { class: 'nb' }, d.neighbours.map((n) => el('button', { onclick: () => select(n.id) }, [
-        el('span', { class: 'score', text: n.score.toFixed(2) }),
-        el('span', {}, [
+        thumb(byId.get(n.id)),
+        el('span', { style: 'min-width:0' }, [
           el('div', { class: 'who', text: n.title || n.id }),
           el('div', { class: 'shared', text: `shares ${n.shared.length}: ${n.shared.slice(0, 3).join(', ')}${n.shared.length > 3 ? '…' : ''}` }),
         ]),
+        el('span', { class: 'score', text: n.score.toFixed(2) }),
       ])))
-      : el('div', { class: 'note', text: 'Nothing else shares terms with this one yet.' }),
-
-    d.read ? el('h4', { text: 'Read' }) : null,
-    d.read ? el('div', { class: 'note', text: d.read }) : null,
-    el('h4', { text: 'File' }),
-    el('code', { class: 'path', text: d.file }),
+      : el('div', { class: 'note', text: 'Nothing else shares terms with this one yet.' })),
+    d.read ? sec('Read', el('div', { class: 'note', style: 'white-space:pre-line', text: d.read })) : null,
+    sec('File', el('code', { class: 'path', text: d.file })),
   ]);
 }
 
@@ -322,42 +619,37 @@ function detailPanel() {
 
 // Obsidian-style: full-bleed canvas, layout solved to equilibrium before the first paint,
 // no perpetual animation loop (a rAF loop runs only while a drag / unpin is re-settling it).
-const CONCEPTS = ['web', 'mobile', 'component', 'slide', 'imagery', 'mockup'];
-const CONCEPT_COLOUR = {
-  web: '#6b8cff', mobile: '#3fcf8e', component: '#b58cf0', slide: '#f06fa0', imagery: '#e6c84f', mockup: '#56c8dc',
-};
-const NEUTRAL_NODE = '#8e8e90';
-let graphLegendOpen = true;   // kept in memory only: viewer sandboxes may block localStorage
+let graphLegendOpen = window.innerWidth > 600;   // kept in memory only: viewer sandboxes may block localStorage
 let graphToken = 0;           // a newer graphView() invalidates an older, still-fetching startGraph()
 
 function graphView() {
+  const counts = new Map(CONCEPTS.map((c) => [c, S.refs.filter((r) => r.concept === c).length]));
   const chip = (key, label) => el('button', {
-    class: 'gchip', 'data-concept': key, 'aria-pressed': String(key === 'all'),
-  }, [
-    key === 'all' ? null : el('i', { style: `background:${CONCEPT_COLOUR[key]}` }),
-    el('span', { text: label }),
-  ]);
-  const btn = (act, label, glyph) => el('button', { class: 'gbtn', 'data-act': act, title: label, 'aria-label': label, text: glyph });
-  const legend = el('div', { class: 'graph-legend' + (graphLegendOpen ? '' : ' collapsed') }, [
-    el('button', { class: 'glegend-head', 'aria-expanded': String(graphLegendOpen), onclick: (e) => {
-      graphLegendOpen = !graphLegendOpen;
-      legend.classList.toggle('collapsed', !graphLegendOpen);
-      e.currentTarget.setAttribute('aria-expanded', String(graphLegendOpen));
-    } }, [el('b', { text: 'Legend' }), el('span', { class: 'caret', text: '▾' })]),
+    class: 'gchip glass', 'data-concept': key, 'aria-pressed': String(key === 'all'),
+  }, [key === 'all' ? null : shapeGlyph(key), el('span', { text: label })]);
+  const btn = (act, label, ico) => el('button', { class: 'gbtn', 'data-act': act, title: label, 'aria-label': label }, [icon(ico)]);
+  const legend = el('div', { class: 'graph-legend glass' + (graphLegendOpen ? '' : ' collapsed') }, [
+    el('button', {
+      class: 'glegend-head', 'aria-expanded': String(graphLegendOpen), onclick: (e) => {
+        graphLegendOpen = !graphLegendOpen;
+        legend.classList.toggle('collapsed', !graphLegendOpen);
+        e.currentTarget.setAttribute('aria-expanded', String(graphLegendOpen));
+      },
+    }, [el('b', { text: 'Legend' }), el('span', { class: 'caret' }, [icon('chevron')])]),
     el('div', { class: 'glegend-body' }, [
-      ...CONCEPTS.map((c) => el('div', { class: 'row' }, [el('i', { style: `background:${CONCEPT_COLOUR[c]}` }), el('span', { text: c })])),
+      ...CONCEPTS.map((c) => el('div', { class: 'row' }, [shapeGlyph(c), el('span', { text: c }), el('span', { class: 'n', text: String(counts.get(c) || 0) })])),
       el('div', { class: 'row' }, [el('i', { class: 'ring' }), el('span', { text: 'liked' })]),
-      el('div', { class: 'note', text: 'Colour = what the image depicts. A link is IDF-weighted facet-vector cosine ≥ 0.20: the two share named terms. Drag a node to pin it; double-click to release.' }),
+      el('div', { class: 'note', text: 'Colour and shape = what the image depicts. A link is IDF-weighted facet-vector cosine ≥ 0.20: the two share named terms. Drag a node to pin it; double-click to release.' }),
     ]),
   ]);
   const wrap = el('div', { class: 'graph-wrap' }, [
-    el('canvas', { id: 'graph' }),
-    el('div', { class: 'graph-preview', style: 'display:none' }),
+    el('canvas', { id: 'graph', 'aria-label': 'Similarity graph of the library' }),
+    el('div', { class: 'graph-preview glass', style: 'display:none' }),
     el('div', { class: 'graph-chips', role: 'group', 'aria-label': 'Filter by concept' },
       [chip('all', 'All'), ...CONCEPTS.map((c) => chip(c, c))]),
     legend,
-    el('div', { class: 'graph-controls' }, [
-      btn('in', 'Zoom in', '+'), btn('out', 'Zoom out', '−'), btn('fit', 'Fit to view', '⤢'), btn('reset', 'Reset layout', '↺'),
+    el('div', { class: 'graph-controls glass' }, [
+      btn('in', 'Zoom in', 'plus'), btn('out', 'Zoom out', 'minus'), btn('fit', 'Fit to view', 'fit'), btn('reset', 'Reset layout', 'reset'),
     ]),
   ]);
   const token = ++graphToken;
@@ -365,17 +657,29 @@ function graphView() {
   return wrap;
 }
 
+const hexA = (hex, a) => {
+  const h = hex.replace('#', '');
+  const v = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  return `rgba(${parseInt(v.slice(0, 2), 16)},${parseInt(v.slice(2, 4), 16)},${parseInt(v.slice(4, 6), 16)},${a})`;
+};
+
 async function startGraph(wrap, token) {
   const canvas = $('#graph', wrap);
   let data;
   try { data = await api('/api/graph'); } catch (e) { toast(e.message, true); return; }
-  // render() runs twice per view switch (see setView); only the live, newest view may draw.
+  // render() can run more than once per view switch; only the live, newest view may draw.
   if (token !== graphToken || !wrap.isConnected) return;
   if (!data.nodes.length) {
     for (const k of [...wrap.children]) k.remove();
     wrap.appendChild(el('div', { class: 'graph-empty', text: 'No references yet — nothing to link.' }));
     return;
   }
+
+  /* ----- theme colours, read once per view (a theme switch re-renders the view) ----- */
+  const C = {
+    ink: cssVar('--ink'), ink2: cssVar('--ink-2'), ink3: cssVar('--ink-3'), surface: cssVar('--surface'),
+    concept: Object.fromEntries([...CONCEPTS, 'none'].map((c) => [c, conceptColour(c)])),
+  };
 
   /* ----- model ----- */
   const groupOf = (n) => (CONCEPTS.includes(n.concept) ? n.concept : 'none');
@@ -478,6 +782,15 @@ async function startGraph(wrap, token) {
   const clampK = (k) => Math.max(0.12, Math.min(6, k));
   const visible = (n) => filter === 'all' || n.g === filter;
 
+  /** Trace a node's concept shape (the secondary encoding to its colour). */
+  function tracePath(n, rad) {
+    const s = SHAPE[n.g] || 'circle';
+    ctx.beginPath();
+    if (s === 'circle') { ctx.arc(n.x, n.y, rad, 0, Math.PI * 2); return; }
+    SHAPE_PTS[s].forEach(([px, py], i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, n.x + px * rad, n.y + py * rad));
+    ctx.closePath();
+  }
+
   /* ----- node preview card: thumbnail + title beside the hovered node ----- */
   const preview = wrap.querySelector('.graph-preview');
   let previewNode = null;
@@ -487,11 +800,7 @@ async function startGraph(wrap, token) {
       previewNode = n;
       preview.replaceChildren(
         n.image ? shotImg('/img/' + n.image, n.title || n.id) : el('div', { class: 'shot-missing', text: 'No image' }),
-        el('div', { class: 'gp-meta' }, [
-          el('span', { class: 'gp-dot', style: `background:${CONCEPT_COLOUR[n.g] || NEUTRAL_NODE}` }),
-          el('b', { text: n.id }),
-          el('span', { text: n.title || '' }),
-        ]),
+        el('div', { class: 'gp-meta' }, [shapeGlyph(n.g), el('b', { text: n.id }), el('span', { text: n.title || '' })]),
       );
       preview.style.display = 'block';
     }
@@ -501,8 +810,8 @@ async function startGraph(wrap, token) {
     const n = previewNode;
     const sx = n.x * view.k + view.x, sy = n.y * view.k + view.y;
     const pw = preview.offsetWidth, ph = preview.offsetHeight;
-    let x = sx + (n.r * view.k) + 10;
-    if (x + pw > W - 8) x = sx - (n.r * view.k) - 10 - pw;
+    let x = sx + (n.r * view.k) + 12;
+    if (x + pw > W - 8) x = sx - (n.r * view.k) - 12 - pw;
     let y = sy - ph / 2;
     y = Math.max(8, Math.min(H - ph - 8, y));
     preview.style.left = Math.max(8, x) + 'px';
@@ -513,7 +822,7 @@ async function startGraph(wrap, token) {
     if (!W || !H) return;
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const n of nodes) { x0 = Math.min(x0, n.x - n.r); x1 = Math.max(x1, n.x + n.r); y0 = Math.min(y0, n.y - n.r); y1 = Math.max(y1, n.y + n.r); }
-    const pad = W < 600 ? 36 : 80;
+    const pad = W < 600 ? 40 : 90;
     const k = clampK(Math.min((W - 2 * pad) / Math.max(x1 - x0, 1), (H - 2 * pad) / Math.max(y1 - y0, 1), 2.2));
     view.k = k;
     view.x = W / 2 - ((x0 + x1) / 2) * k;
@@ -535,32 +844,32 @@ async function startGraph(wrap, token) {
     for (const l of links) {
       const both = visible(l.s) && visible(l.t);
       const lit = hover && (l.s === hover || l.t === hover);
-      ctx.globalAlpha = !both ? 0.04 : hover ? (lit ? 1 : 0.06) : 1;
-      ctx.strokeStyle = lit ? 'rgba(242,242,243,0.85)' : `rgba(150,150,155,${0.14 + l.w * 0.4})`;
+      ctx.globalAlpha = !both ? 0.05 : hover ? (lit ? 1 : 0.08) : 1;
+      ctx.strokeStyle = lit ? C.ink : hexA(C.ink3, 0.18 + l.w * 0.45);
       ctx.lineWidth = (lit ? 1.6 : 0.6 + l.w * 1.2) / k;
       ctx.beginPath(); ctx.moveTo(l.s.x, l.s.y); ctx.lineTo(l.t.x, l.t.y); ctx.stroke();
     }
     for (const n of nodes) {
       const on = hover ? (n === hover || nb.has(n)) : true;
-      ctx.globalAlpha = !visible(n) ? 0.1 : on ? 1 : 0.15;
-      ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-      ctx.fillStyle = CONCEPT_COLOUR[n.g] || NEUTRAL_NODE;
+      ctx.globalAlpha = !visible(n) ? 0.12 : on ? 1 : 0.18;
+      tracePath(n, n.r);
+      ctx.fillStyle = C.concept[n.g] || C.concept.none;
       ctx.fill();
-      ctx.lineWidth = 1 / k; ctx.strokeStyle = '#1b1b1d'; ctx.stroke();
+      ctx.lineWidth = 2 / k; ctx.strokeStyle = C.surface; ctx.stroke();   // 2px surface ring separates overlaps
       if (n.reaction === 'like') {
-        ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 2.5 / k, 0, Math.PI * 2);
-        ctx.lineWidth = 2 / k; ctx.strokeStyle = '#ff6b00'; ctx.stroke();
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 4 / k, 0, Math.PI * 2);
+        ctx.lineWidth = 2 / k; ctx.strokeStyle = C.ink; ctx.stroke();
       }
     }
     ctx.globalAlpha = 1;
     // labels in screen space so text stays crisp and a constant size at any zoom
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.font = '11px Inter, -apple-system, sans-serif';
+    ctx.font = '500 11px Inter, -apple-system, "Segoe UI", sans-serif';
     ctx.textBaseline = 'middle';
     if (hover) {
-      ctx.fillStyle = 'rgba(242,242,243,0.8)';
+      ctx.fillStyle = C.ink2;
       ctx.textAlign = 'left';
-      for (const n of nb) if (visible(n)) ctx.fillText(n.id, n.x * k + view.x + n.r * k + 6, n.y * k + view.y);
+      for (const n of nb) if (visible(n)) ctx.fillText(n.id, n.x * k + view.x + n.r * k + 7, n.y * k + view.y);
     }
     positionPreview();   // the HTML preview card follows the node through pans, zooms and drags
   }
@@ -693,9 +1002,9 @@ async function startGraph(wrap, token) {
       }
       lastTap = { id: n.id, t: now };
       clearTimeout(openTimer);
-      openTimer = setTimeout(() => { setView('gallery'); select(n.id); }, 330);
+      openTimer = setTimeout(() => openRef(n.id), 330);
     } else {
-      setView('gallery'); select(n.id);
+      openRef(n.id);
     }
   };
   canvas.addEventListener('pointerup', (e) => release(e, false));
@@ -739,89 +1048,94 @@ async function startGraph(wrap, token) {
 
 function queueView() {
   const pending = S.refs.filter((r) => r.status === 'unreviewed');
+  const head = el('div', { class: 'page-head' }, [
+    el('h1', { text: 'Queue' }),
+    el('span', { class: 'sub', text: pending.length ? `${pending.length} waiting for your reaction` : 'All caught up' }),
+  ]);
   if (!pending.length) {
-    return el('div', { class: 'content' }, [el('div', { class: 'empty' }, [
+    return el('div', { class: 'list-view' }, [head, el('div', { class: 'empty' }, [
       el('b', { text: 'Nothing waiting' }),
       el('div', { text: S.refs.length ? 'Every reference has been reviewed.' : 'The library is empty.' }),
     ])]);
   }
-  return el('div', { class: 'content' }, [
-    el('div', { class: 'hint info', text: `${pending.length} to review. The classification below is my proposal — correcting it, or saying why you like something, is what records your taste.` }),
-    el('div', { class: 'queue' }, pending.map((r) => el('div', { class: 'qrow' }, [
-      r.image ? shotImg('/img/' + r.image, r.title) : el('div'),
-      el('div', {}, [
-        el('div', { style: 'font-size:14px;margin-bottom:2px' }, [r.title || r.id]),
-        el('div', { class: 'sub', style: 'color:#8e8e90;font-size:11px;margin-bottom:8px' },
-          [[r.id, r.source, r.kind, r.archetype.join(' ')].filter(Boolean).join(' · ')]),
-        el('div', { class: 'badges', style: 'margin-bottom:8px' }, [
-          r.verdict ? el('span', { class: 'badge ' + r.verdict, text: r.verdict }) : null,
-          el('span', { class: 'badge', text: 'photo: ' + (r.imagery_dep || '?') }),
-          el('span', { class: 'badge', text: 'rtl: ' + (r.rtl || '?') }),
-          el('span', { class: 'badge', text: 'cost: ' + (r.cost || '?') }),
+  return el('div', { class: 'list-view' }, [
+    head,
+    el('div', { class: 'hint info', text: 'The classification below is my proposal. Correcting it, or saying why you like something, is what records your taste.' }),
+    ...pending.map((r) => el('div', { class: 'qrow' }, [
+      el('div', { class: 'qshot', onclick: () => openRef(r.id), title: 'Open in gallery' }, [r.image ? shotImg('/img/' + r.image, r.title) : el('div', { class: 'shot-missing' })]),
+      el('div', { style: 'min-width:0' }, [
+        el('div', { class: 'qt', text: r.title || r.id }),
+        el('div', { class: 'qs', text: [r.id, r.source, termName(r.archetype[0] || '')].filter(Boolean).join(' · ') }),
+        el('div', { class: 'badges' }, [
+          el('span', { class: 'pill', style: 'text-transform:capitalize' }, [shapeGlyph(r.concept), r.concept || '—']),
+          r.verdict ? el('span', { class: 'pill ' + r.verdict, text: r.verdict }) : null,
+          el('span', { class: 'pill', text: 'photo: ' + (r.imagery_dep || '?') }),
+          el('span', { class: 'pill', text: 'rtl: ' + (r.rtl || '?') }),
+          el('span', { class: 'pill', text: 'cost: ' + (r.cost || '?') }),
         ]),
-        el('div', { class: 'terms' }, r.facets.slice(0, 6).map((t) =>
-          el('div', { class: 'term' }, [el('code', { text: t })]))),
+        el('div', { class: 'codes' }, r.facets.slice(0, 8).map((t) => el('code', { title: termName(t), text: t }))),
       ]),
-      el('div', {}, [
-        el('div', { class: 'react' }, [
-          el('button', { text: 'Like', onclick: () => react(r.id, 'like') }),
-          el('button', { class: 'off', text: 'Not for me', onclick: () => react(r.id, 'dislike') }),
-        ]),
+      el('div', { class: 'qact' }, [
+        reactionSeg(r),
         el('textarea', {
-          placeholder: 'Why? (this is the evidence)',
-          value: r.sam_note || '',
+          placeholder: 'Why? (this is the evidence)', 'aria-label': `Why — ${r.id}`,
           onchange: (e) => saveNote(r.id, e.target.value),
-        }),
-        el('div', { style: 'margin-top:6px' }, [
-          el('button', { class: 'clear', text: 'Open in gallery', onclick: () => { setView('gallery'); select(r.id); } }),
-        ]),
+        }, [r.sam_note || '']),
+        el('button', { class: 'btn sm', onclick: () => openRef(r.id) }, ['Open in gallery', icon('arrow')]),
       ]),
-    ]))),
+    ])),
   ]);
 }
 
 /* ---------- candidates ---------- */
 
-async function candidatesView() {
-  const host = el('div', { class: 'content' }, [el('div', { class: 'note', text: 'Looking for patterns in your reactions…' })]);
+function candidatesView() {
+  const host = el('div', { class: 'list-view' }, [
+    el('div', { class: 'page-head' }, [el('h1', { text: 'Candidates' }), el('span', { class: 'sub', text: 'Looking for patterns in your reactions…' })]),
+  ]);
   api('/api/candidates').then(({ candidates }) => {
+    const head = el('div', { class: 'page-head' }, [
+      el('h1', { text: 'Candidates' }),
+      el('span', { class: 'sub', text: candidates.length ? `${candidates.length} leaning${candidates.length === 1 ? '' : 's'} found` : 'No clear leanings yet' }),
+    ]);
     if (!candidates.length) {
-      host.replaceChildren(el('div', { class: 'empty' }, [
+      host.replaceChildren(head, el('div', { class: 'empty' }, [
         el('b', { text: 'No clear leanings yet' }),
-        el('div', { text: 'React to more references. A term shows up here once at least 3 reactions agree on it.' }),
+        el('div', { text: 'React to more references. A term shows up here once enough reactions agree on it.' }),
+        el('button', { class: 'btn', onclick: () => setView('queue') }, ['Go to the queue']),
       ]));
       return;
     }
     host.replaceChildren(
+      head,
       el('div', { class: 'hint', text: 'These are terms your reactions lean on consistently. They are candidates, not preferences — a preference needs a reason in your words. Write one and it goes to the queue for me to turn into a PREF record.' }),
       ...candidates.map((c) => {
-        const box = el('textarea', { placeholder: `Why do you ${c.leaning} ${c.term}? One line in your words.` });
+        const box = el('textarea', { placeholder: `Why do you ${c.leaning} ${c.term}? One line in your words.`, 'aria-label': `Reason for ${c.term}` });
         return el('div', { class: 'cand' }, [
           el('div', { class: 'head' }, [
             el('code', { text: c.term }),
-            el('span', { text: c.name || '' }),
-            el('span', { class: 'badge ' + (c.leaning === 'like' ? 'like' : 'dislike'), text: c.leaning }),
+            el('span', { class: 'nm', text: c.name || '' }),
+            el('span', { class: 'pill ' + (c.leaning === 'like' ? 'like' : 'dislike'), text: c.leaning }),
             el('span', {
-              class: 'badge ' + c.stance,
+              class: 'pill ' + (c.stance === 'required' ? 'required' : ''),
               title: c.stance === 'required'
                 ? 'A constraint on the work, not a taste — a preference here would sit alongside it'
                 : 'Sam’s recorded position on this term',
               text: 'stance now: ' + c.stance,
             }),
-            el('span', { style: 'margin-left:auto;font-family:var(--mono);font-size:11px;color:#9a9a9c' },
-              [`${c.like} like / ${c.dislike} not · ${Math.round(c.ratio * 100)}% agree`]),
+            el('span', { class: 'stat', text: `${c.like} like / ${c.dislike} not · ${Math.round(c.ratio * 100)}% agree` }),
           ]),
-          el('div', { class: 'bar' }, [el('i', { style: `width:${Math.round(c.ratio * 100)}%` })]),
-          el('div', { class: 'note', style: 'margin-bottom:8px' },
-            [`From ${c.refs.length} references: ${c.refs.join(', ')}`]),
+          el('div', { class: 'meter hatch' }, [el('i', { style: `width:${Math.round(c.ratio * 100)}%` })]),
+          el('div', { class: 'note', style: 'margin-bottom:10px' }, [`From ${c.refs.length} references: ${c.refs.join(', ')}`]),
           box,
-          el('div', { style: 'margin-top:6px;display:flex;gap:6px' }, [
+          el('div', { class: 'acts' }, [
             el('button', {
-              class: 'primary', text: 'Record this reason',
+              class: 'btn primary', text: 'Record this reason',
               onclick: async (e) => {
                 const reason = box.value.trim();
                 if (!reason) { toast('A reason is the whole point — write one line.', true); return; }
-                e.target.disabled = true;
+                e.currentTarget.disabled = true;
+                const b = e.currentTarget;
                 try {
                   const out = await api('/api/candidate-reason', {
                     method: 'POST',
@@ -831,18 +1145,15 @@ async function candidatesView() {
                   toast('Queued in ' + out.file);
                   box.value = '';
                 } catch (err) { toast(err.message, true); }
-                e.target.disabled = false;
+                b.disabled = false;
               },
             }),
-            el('button', {
-              class: 'clear', style: 'width:auto;padding:7px 12px', text: 'See these references',
-              onclick: () => { S.filters.term.clear(); S.filters.term.add(c.term); setView('gallery'); },
-            }),
+            el('button', { class: 'btn', onclick: () => showIn('term', c.term) }, ['See these references']),
           ]),
         ]);
       }),
     );
-  }).catch((e) => host.replaceChildren(el('div', { class: 'hint warn', text: e.message })));
+  }).catch((e) => host.appendChild(el('div', { class: 'hint warn', text: e.message })));
   return host;
 }
 
@@ -857,22 +1168,22 @@ const modelChoice = () => {
 const setModelChoice = (v) => { try { localStorage.setItem('design.model', v); } catch { /* ignore */ } };
 
 function inboxView() {
-  const host = el('div', { class: 'content' }, []);
+  const host = el('div', { class: 'inbox' }, [
+    el('div', { class: 'page-head' }, [el('h1', { text: 'Inbox' }), el('span', { class: 'sub', text: 'Loading…' })]),
+  ]);
 
   const paint = (data, status) => {
     const running = status && status.running;
     const n = data.count;
     const chosen = ((MODELS || []).some((m) => m.id === modelChoice()) ? modelChoice() : null) || (MODELS || []).find((m) => m.default)?.id || '';
 
-    const header = el('div', { class: 'inbox-head' }, [
-      el('div', {}, [
-        el('h2', { class: 'inbox-title', text: n ? `${n} image${n === 1 ? '' : 's'} ready to analyse` : 'Inbox is empty' }),
-        el('p', { class: 'inbox-sub' }, [
-          'Press ', el('kbd', { text: 'Ctrl' }), ' + ', el('kbd', { text: 'V' }),
-          ' anywhere to paste a screenshot, or drop image files onto the window.',
-        ]),
+    const header = el('div', { class: 'page-head' }, [
+      el('h1', { text: 'Inbox' }),
+      el('span', { class: 'sub', text: n ? `${n} image${n === 1 ? '' : 's'} ready to analyse` : 'Nothing waiting' }),
+      el('div', { class: 'end' }, [
+        el('button', { class: 'btn sm', onclick: () => refreshInbox() }, [icon('refresh'), 'Refresh']),
+        el('button', { class: 'btn sm', onclick: () => $('#file-in').click() }, [icon('upload'), 'Add images']),
       ]),
-      el('button', { class: 'clear inbox-refresh', text: 'Refresh', onclick: () => refreshInbox() }),
     ]);
 
     const grid = n
@@ -883,7 +1194,7 @@ function inboxView() {
           el('span', { class: 'shot-size', text: kb(f.size) }),
         ]),
         el('button', {
-          class: 'shot-remove', title: 'Remove from the inbox', 'aria-label': `Remove ${f.name}`, text: '✕',
+          class: 'icon-btn sm shot-remove', title: 'Remove from the inbox', 'aria-label': `Remove ${f.name}`,
           onclick: async (e) => {
             e.stopPropagation();
             try {
@@ -895,11 +1206,15 @@ function inboxView() {
               refreshInbox();
             } catch (err) { toast(err.message, true); }
           },
-        }),
+        }, [icon('close')]),
       ])))
       : el('div', { class: 'empty' }, [
         el('b', { text: 'Nothing waiting' }),
-        el('div', { text: 'Paste or drop a screenshot and it will appear here before anything is analysed.' }),
+        el('div', {}, [
+          'Press ', el('kbd', { text: 'Ctrl' }), ' + ', el('kbd', { text: 'V' }),
+          ' anywhere to paste a screenshot, or drop image files onto the window.',
+        ]),
+        el('button', { class: 'btn primary', onclick: () => $('#file-in').click() }, [icon('upload'), 'Choose images']),
       ]);
 
     const controls = el('div', { class: 'run-bar' }, [
@@ -913,7 +1228,7 @@ function inboxView() {
         }))),
       ]),
       el('button', {
-        class: 'primary',
+        class: 'btn primary',
         text: running ? 'Analysing…' : n ? `Analyse ${n} image${n === 1 ? '' : 's'}` : 'Nothing to analyse',
         disabled: running || !n,
         onclick: async () => {
@@ -943,13 +1258,13 @@ function inboxView() {
       header,
       grid,
       controls,
-      explain,
       status && status.code !== null && status.code !== undefined && !running
         ? el('div', { class: 'hint ' + (status.code === 0 ? 'info' : 'warn') },
           [status.code === 0
-            ? (status.queued ? `Queued for Hark. Message Hark "analyze" in your chat; results land in the Queue tab.` : `Last run finished${status.model ? ' on ' + status.model : ''}. Check the Queue tab.`)
+            ? (status.queued ? 'Queued for Hark. Message Hark "analyze" in your chat; results land in the Queue.' : `Last run finished${status.model ? ' on ' + status.model : ''}. Check the Queue.`)
             : (status.hint || `Last run failed (exit ${status.code}). Run /design-ingest inside a Claude Code session instead.`)])
         : null,
+      explain,
       status && status.log
         ? el('details', { class: 'run-log' }, [
           el('summary', { text: 'Run output' }),
@@ -963,9 +1278,10 @@ function inboxView() {
     try {
       if (!MODELS) MODELS = (await api('/api/models')).models;
       const [data, status] = await Promise.all([api('/api/inbox'), api('/api/ingest/status')]);
+      if (!host.isConnected && S.view !== 'inbox') return;
       paint(data, status);
       await loadOverview();
-      renderStats();
+      renderChrome();
     } catch (e) { toast(e.message, true); }
   };
   refreshInbox();
@@ -981,8 +1297,8 @@ function pollIngest() {
       if (!s.running) {
         clearInterval(pollTimer);
         await loadAll();
-        if (S.view === 'inbox') render();
-        toast(s.code === 0 ? 'Ingest finished — references are in the Queue.' : 'Ingest ended with errors; see the Inbox tab.', s.code !== 0);
+        if (S.view !== 'graph') render(); else renderChrome();
+        toast(s.code === 0 ? 'Ingest finished — references are in the Queue.' : 'Ingest ended with errors; see the Inbox.', s.code !== 0);
       }
     } catch { clearInterval(pollTimer); }
   }, 4000);
@@ -990,42 +1306,41 @@ function pollIngest() {
 
 /* ---------- render ---------- */
 
+/** Search-as-you-type repaints only the gallery body, keeping the rail and panel. */
 function renderContent() {
-  const content = $('#main .content, #main .graph-wrap');
-  if (S.view === 'gallery' && content) {
-    content.replaceWith(galleryContent());
-    return true;
-  }
+  const cur = $('#main .gal-main');
+  if (S.view === 'gallery' && cur) { cur.replaceWith(galleryMain()); return true; }
   return false;
 }
 
 function render() {
   const main = $('#main');
-  renderStats();
+  renderChrome();
   if (S.view === 'gallery') {
-    main.className = 'with-rail' + (S.selected ? ' detail-open' : '');
-    main.replaceChildren(rail(), galleryContent(), detailPanel() || document.createComment(''));
-    return;
+    main.className = 'gallery' + (S.selected ? ' detail-open' : '');
+    main.replaceChildren(rail(), galleryMain(), detailPanel() || document.createComment(''));
+  } else {
+    main.className = '';
+    const view = S.view === 'overview' ? overviewView()
+      : S.view === 'graph' ? graphView()
+        : S.view === 'queue' ? queueView()
+          : S.view === 'candidates' ? candidatesView()
+            : inboxView();
+    main.replaceChildren(view);
   }
-  main.className = '';
-  const view = S.view === 'graph' ? graphView()
-    : S.view === 'queue' ? queueView()
-      : S.view === 'inbox' ? inboxView()
-        : el('div', { class: 'content' }, [el('div', { class: 'note', text: 'Loading…' })]);
-  main.replaceChildren(view);
-  if (S.view === 'candidates') candidatesView().then((node) => main.replaceChildren(node));
+  syncOverlay();
 }
 
 /* ---------- data ---------- */
 
-async function loadOverview() { S.overview = await api('/api/overview'); }
+async function loadOverview() { S.overview = await api('/api/overview'); indexTerms(); }
 async function loadRefs() { S.refs = (await api('/api/refs')).refs; }
 async function loadAll() {
   try { await Promise.all([loadOverview(), loadRefs()]); }
   catch (e) { toast('Cannot reach the studio server: ' + e.message, true); }
 }
 
-/* ---------- upload: drop and paste ---------- */
+/* ---------- upload: drop, paste, pick ---------- */
 
 const EXT_FOR = {
   'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp',
@@ -1057,21 +1372,22 @@ async function uploadFiles(files, pasted) {
   if (ok) {
     toast(`${ok} image${ok === 1 ? '' : 's'} ${pasted ? 'pasted' : 'added'} into the inbox.`);
     await loadOverview();
-    renderStats();
+    renderChrome();
     if (S.view === 'inbox') render();
   }
   return ok;
 }
 
 let dragDepth = 0;
-window.addEventListener('dragenter', (e) => { e.preventDefault(); dragDepth++; document.body.classList.add('dragging'); });
-window.addEventListener('dragleave', (e) => { e.preventDefault(); if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragging'); } });
+const isFileDrag = (e) => [...((e.dataTransfer && e.dataTransfer.types) || [])].includes('Files');
+window.addEventListener('dragenter', (e) => { if (!isFileDrag(e)) return; e.preventDefault(); dragDepth++; document.body.classList.add('dragging'); });
+window.addEventListener('dragleave', (e) => { if (!isFileDrag(e)) return; e.preventDefault(); if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragging'); } });
 window.addEventListener('dragover', (e) => e.preventDefault());
 window.addEventListener('drop', async (e) => {
   e.preventDefault();
   dragDepth = 0;
   document.body.classList.remove('dragging');
-  await uploadFiles([...(e.dataTransfer.files || [])], false);
+  await uploadFiles([...(e.dataTransfer.files || [])].filter((f) => f.type.startsWith('image/')), false);
 });
 
 // Paste a screenshot straight in. Text pastes are left alone, so typing a reason
@@ -1088,20 +1404,70 @@ window.addEventListener('paste', async (e) => {
   await uploadFiles(files, true);
 });
 
-for (const b of document.querySelectorAll('nav button')) {
-  b.addEventListener('click', () => setView(b.dataset.view));
+/* ---------- shell wiring ---------- */
+
+hydrateIcons();
+
+for (const b of document.querySelectorAll('#nav button')) {
+  b.addEventListener('click', () => { if (b.dataset.view !== 'gallery') { S.selected = null; S.detail = null; } setView(b.dataset.view); });
 }
+
+const q = $('#q');
+q.addEventListener('input', () => {
+  S.search = q.value;
+  if (S.view !== 'gallery') { setView('gallery'); return; }
+  renderContent();
+});
+q.addEventListener('keydown', (e) => { if (e.key === 'Escape') { q.value = ''; S.search = ''; renderContent(); q.blur(); } });
+
+const fileIn = $('#file-in');
+$('#add-btn').addEventListener('click', () => fileIn.click());
+fileIn.addEventListener('change', async () => {
+  await uploadFiles([...fileIn.files], false);
+  fileIn.value = '';
+});
+
+function paintThemeButton() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const b = $('#theme-btn');
+  b.replaceChildren(icon(dark ? 'sun' : 'moon'));
+  b.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+  b.title = b.getAttribute('aria-label');
+}
+$('#theme-btn').addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('design.theme', next); } catch { /* storage blocked: session-only */ }
+  paintThemeButton();
+  if (S.view === 'graph') render();     // canvas colours are read at draw time, not from CSS
+});
+paintThemeButton();
+
+$('#menu-btn').addEventListener('click', () => document.body.classList.add('nav-open'));
+$('#scrim').addEventListener('click', closeOverlays);
+window.addEventListener('resize', syncOverlay);
+
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && S.selected) { S.selected = null; S.detail = null; render(); }
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement && document.activeElement.tagName);
+  if (e.key === '/' && !typing) { e.preventDefault(); q.focus(); return; }
+  if (e.key !== 'Escape') return;
+  if (document.body.classList.contains('nav-open')) { document.body.classList.remove('nav-open'); return; }
+  if (S.railOpen) { S.railOpen = false; render(); return; }
+  if (S.selected) { S.selected = null; S.detail = null; render(); }
+});
+
+window.addEventListener('hashchange', () => {
+  const v = location.hash.slice(1);
+  if (VIEWS[v] && v !== S.view) setView(v);
 });
 
 loadAll().then(render);
 
 /* sign out, shown only when the studio has a login */
-fetch('/api/session').then(r => r.json()).then(s => {
+fetch('/api/session').then((r) => r.json()).then((s) => {
   if (!s.auth) return;
-  const b = document.createElement('button');
-  b.className = 'signout'; b.type = 'button'; b.textContent = 'Sign out';
-  b.onclick = async () => { await api('/api/logout', { method: 'POST' }).catch(() => {}); location.href = '/login'; };
-  document.querySelector('header').appendChild(b);
+  $('#side-foot').appendChild(el('button', {
+    class: 'icon-btn', type: 'button', title: 'Sign out', 'aria-label': 'Sign out',
+    onclick: async () => { await api('/api/logout', { method: 'POST' }).catch(() => {}); location.href = '/login'; },
+  }, [icon('logout')]));
 }).catch(() => {});
