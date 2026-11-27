@@ -10,14 +10,14 @@ ingests because nothing kept it in step, which is why it is no longer hand-maint
 
 | ID | What | Kind | Archetype | Imagery dep. | RTL | Cost | Verdict | Review |
 |---|---|---|---|---|---|---|---|---|
-| [REF-0001](REF-0001-ai-shopping-chat-cards.md) | AI shopping-assistant answer cards over product photo | concept | J.CORE.search | soft | clean | low | adapt | unreviewed |
+| [REF-0001](REF-0001-ai-shopping-chat-cards.md) | AI shopping-assistant answer cards over product photo | concept | J.CORE.search | soft | clean | low | adapt | reviewed like |
 | [REF-0002](REF-0002-sivra-profile-card.md) | Sivra social profile card, blue 3D banner on black | concept | J.ACQ.profile-public | soft | clean | med | adapt | unreviewed |
 | [REF-0003](REF-0003-whop-card-onboarding.md) | Whop Card onboarding step: glowing card on near-black | concept | J.ON.empty-first-run | soft | risky | high | adapt | unreviewed |
 | [REF-0004](REF-0004-job-card-folder-tab.md) | Dark job-listing card with folder-tab notch and gradient Apply pill | concept | J.CORE.browse | none | clean | low | adapt | unreviewed |
-| [REF-0005](REF-0005-feature-bento-light-dark-pair.md) | Feature tile: light card and dark card nested in a white tray | concept | J.ACQ.feature | none | clean | low | adapt | unreviewed |
+| [REF-0005](REF-0005-feature-bento-light-dark-pair.md) | Feature tile: light card and dark card nested in a white tray | concept | J.ACQ.feature | none | clean | low | adapt | reviewed like |
 | [REF-0006](REF-0006-ai-notetaker-feature-tile.md) | AI notetaker feature tile: blueprint grid, notes card, glass clock render | brand | J.ACQ.feature | soft | risky | high | adapt | unreviewed |
-| [REF-0007](REF-0007-superbrand-profile-card-mono.md) | Superbrand profile card, monochrome grey-on-black | concept | J.ACQ.profile-public | none | clean | low | adapt | unreviewed |
-| [REF-0008](REF-0008-orange-mesh-cta-footer.md) | Template footer with orange grain-mesh CTA panel (Flexfolio) | concept | J.ACQ.landing | soft | clean | med | adapt | unreviewed |
+| [REF-0007](REF-0007-superbrand-profile-card-mono.md) | Superbrand profile card, monochrome grey-on-black | concept | J.ACQ.profile-public | none | clean | low | adapt | reviewed like |
+| [REF-0008](REF-0008-orange-mesh-cta-footer.md) | Template footer with orange grain-mesh CTA panel (Flexfolio) | concept | J.ACQ.landing | soft | clean | med | adapt | reviewed like |
 | [REF-0009](REF-0009-profile-card-green-gradient-pair.md) | Profile card in two variants: white and green grain gradient | concept | J.ACQ.profile-public | soft | risky | med | adapt | unreviewed |
 | [REF-0010](REF-0010-blueprint-chamfered-feature-cards.md) | Landing feature row: chamfered cream and orange cards with line diagrams | concept | J.ACQ.feature | soft | risky | low | adapt | unreviewed |
 | [REF-0011](REF-0011-insight-stat-card-glow.md) | Insight card: thin 89% hero numeral over corner glow | concept | J.DATA.home | none | risky | med | adapt | unreviewed |
@@ -69,7 +69,7 @@ ingests because nothing kept it in step, which is why it is no longer hand-maint
 | [REF-0058](REF-0058-laptop-mockup-velvet-chair-legal-split.md) | Laptop on orange velvet armchair, legal-services split hero with frosted service cards | concept | J.ACQ.landing | soft | risky | high | adapt | unreviewed |
 | [REF-0059](REF-0059-laptop-mockup-perforated-metal-logistics.md) | Laptop on black metal grid with red perforated panel, condensed-caps logistics hero | concept | J.ACQ.landing | soft | breaks | high | adapt | unreviewed |
 | [REF-0060](REF-0060-laptop-mockup-dark-room-car-quote-form.md) | Over-the-shoulder laptop in a dark room, car-import quote form on frosted glass | concept | J.ACQ.landing, J.ON.intake | hard | risky | high | adapt | unreviewed |
-| [REF-0061](REF-0061-concrete-landing-laptop-dark-plinth.md) | Dark staged laptop mockup — bio-concrete landing, orange-gradient screen echoed by rim light | concept | J.ACQ.landing | hard | breaks | high | adapt | unreviewed |
+| [REF-0061](REF-0061-concrete-landing-laptop-dark-plinth.md) | Dark staged laptop mockup — bio-concrete landing, orange-gradient screen echoed by rim light | concept | J.ACQ.landing | hard | breaks | high | adapt | reviewed like |
 | [REF-0062](REF-0062-vaulk-shelter-landing-monitor-garden.md) | Monitor-on-desk mockup — full-bleed landscape hero with centred sans headline, brand cards on desk | brand | J.ACQ.landing | hard | risky | high | adapt | unreviewed |
 | [REF-0063](REF-0063-agentic-ai-landing-monitor-rock-sunset.md) | Monitor-on-rock mockup — dark agentic-AI landing with mint action accent and orange light-streak | concept | J.ACQ.landing | soft | risky | high | adapt | unreviewed |
 | [REF-0064](REF-0064-credit-dashboard-monitor-over-shoulder.md) | Over-the-shoulder monitor mockup — credit-score dashboard, bento cards over blurred colour blob, dark lower half | concept | J.DATA.home | soft | risky | high | adapt | unreviewed |
@@ -88,6 +88,28 @@ ingests because nothing kept it in step, which is why it is no longer hand-maint
 | [REF-0077](REF-0077-silver-excavator-city-dusk.md) | AI render — silver supercar-styled excavator with gold trim against a hazy city skyline | concept | J.REF.imagery | hard | clean | high | adapt | unreviewed |
 | [REF-0078](REF-0078-camo-attack-helicopter-clouds.md) | AI render — tan-and-black camouflage attack helicopter against storm clouds | concept | J.REF.imagery | hard | clean | high | adapt | unreviewed |
 | [REF-0079](REF-0079-white-excavator-quarry.md) | AI render — white and graphite excavator with automotive surfacing in a white-rock quarry hall | concept | J.REF.imagery | hard | clean | high | adapt | unreviewed |
+| [REF-0080](REF-0080-qanun-sidebar-light-dark-pair.md) | Sidebar navigation in a light/dark pair — grouped caps sections, lime action and upgrade pill (Qanun) | concept | J.DATA.home | none | risky | low | adapt | unreviewed |
+| [REF-0081](REF-0081-agency-pricing-nested-cards-black-partnership.md) | Agency pricing section — nested white-in-grey plan cards, black full-width CTA, black partnership band | concept | J.ACQ.pricing | none | clean | low | adapt | unreviewed |
+| [REF-0082](REF-0082-drone-control-dashboard-dark-bento.md) | Drone control dashboard concept — dark bento around a live camera feed with HUD overlays, pale-yellow values | concept | J.CORE.capture | soft | risky | med | adapt | unreviewed |
+| [REF-0083](REF-0083-legal-ai-dashboard-thin-hero-green-glass.md) | Legal AI dashboard concept — thin oversized greeting, deep-green glass render, gantt timeline, assistant panel (FlowFunds) | concept | J.DATA.home | soft | risky | med | adapt | unreviewed |
+| [REF-0084](REF-0084-footer-black-cta-band-white-card-watermark.md) | Footer — black CTA band with top radial glow, white link card, giant ghost wordmark behind (Graphy) | concept | J.ACQ.landing | none | clean | low | adapt | unreviewed |
+| [REF-0085](REF-0085-pink-salt-product-laptop-plum-gradient.md) | Floating laptop mockup on plum-to-pink gradient — split product page, dark text panel beside macro salt photo | concept | J.ACQ.landing | hard | risky | high | adapt | unreviewed |
+| [REF-0086](REF-0086-newcode-mobile-caps-overlapping-3d-forms.md) | Phone mockup on terrazzo — NewCode process page, oversized cream caps overlapped by glossy orange-red 3D forms | brand | J.ACQ.landing | soft | risky | high | adapt | unreviewed |
+| [REF-0087](REF-0087-ovantiq-studio-landing-monitor-perforated-steps.md) | Studio display on perforated steps — white studio landing, heavy ALL-CAPS statement, black 3D-ribbon panel (Ovantiq) | shipped | J.ACQ.landing | soft | risky | med | adapt | unreviewed |
+| [REF-0088](REF-0088-velox-credit-landing-laptop-leather-pouf.md) | Laptop on leather pouf — dark fintech landing, centred headline under striped orange glow, ghost + orange CTAs (Velox) | concept | J.ACQ.landing | soft | clean | med | adapt | unreviewed |
+| [REF-0089](REF-0089-studio-display-marble-slab-iridescent-wallpaper.md) | Studio display on marble slab and concrete plinth — iridescent light-ribbon wallpaper, grey studio | concept | J.REF.imagery | hard | clean | high | adapt | unreviewed |
+| [REF-0090](REF-0090-smart-park-iot-dashboard-monitor-3d-city.md) | Monitor-and-phone mockup — dark smart-park IoT decision dashboard, isometric 3D campus with alert callouts | shipped | J.DATA.home | soft | risky | high | adapt | unreviewed |
+| [REF-0091](REF-0091-sottozero-laptop-stone-slab-iridescent-arcs.md) | Laptop on rough stone slab — black brand page with iridescent light arcs and giant lowercase wordmark (sottozero) | concept | J.ACQ.landing | hard | breaks | high | adapt | unreviewed |
+| [REF-0092](REF-0092-shift5-landing-laptop-dark-terrain-orange-panel.md) | Laptop on dark terrain under grey sky — red-orange headline panel with oversized black grotesque, B/W photo strip (SHIFT5) | concept | J.ACQ.landing | soft | breaks | med | adapt | unreviewed |
+| [REF-0093](REF-0093-fintrix-dashboard-ipad-hands-ghost-wordmark.md) | Hands-held iPad mockup — dark fintech dashboard with orange single-bar highlight, ghost wordmark backdrop (Fintrix) | concept | J.DATA.home | none | risky | med | adapt | unreviewed |
+| [REF-0094](REF-0094-huddly-meeting-dashboard-lime-floating-landscape.md) | Meeting dashboard concept floating over a meadow photo — light cards, neon-lime highlight, coloured row stripes (huddly) | concept | J.DATA.home | soft | risky | med | adapt | unreviewed |
+| [REF-0095](REF-0095-macbook-touch-mockup-navy-black-stand.md) | Laptop on black desk brackets against navy gradient — periwinkle gradient screen with thin centred caps title (mockup PSD) | concept | J.REF.imagery | hard | clean | med | adapt | unreviewed |
+| [REF-0096](REF-0096-cyrillic-naming-slide-laptop-dark-room.md) | Low-angle laptop in a dark room with window light — sepia leaf-photo slide, upright + italic serif headline (Cyrillic) | concept | J.PRES.slide | soft | clean | med | adapt | unreviewed |
+| [REF-0097](REF-0097-formify-building-plan-mobile-isometric-render.md) | Mobile building-plan screen — isometric 3D floor plan render, frosted progress card with thin 67%, dark bottom sheet (RON Design) | concept | J.CORE.detail | hard | risky | high | adapt | unreviewed |
+| [REF-0098](REF-0098-rockmos-laptop-floating-moss-rocks-ai.md) | Floating laptop between moss-covered rocks — 'Mac Book' heavy headline with motion blur, moss photo on screen (AI mockup product) | concept | J.ACQ.landing | hard | breaks | high | adapt | unreviewed |
+| [REF-0099](REF-0099-siliconv-sme-landing-laptop-glass-block-studio.md) | Low-angle laptop in a white glass-block studio — dark SME investment landing, white bold headline, blue CTA, B/W architecture photo (Silicon.V) | concept | J.ACQ.landing | soft | risky | med | adapt | unreviewed |
+| [REF-0100](REF-0100-tan-black-spaag-white-hangar.md) | AI render — tan and black twin-cannon anti-aircraft vehicle with radar box in a white hangar | concept | J.REF.imagery | hard | clean | high | adapt | unreviewed |
+| [REF-0101](REF-0101-grey-clay-heavy-armoured-transport-model.md) | Grey untextured 3D model — riveted slab-armour transport with sponson guns (sculpt / print preview) | concept | J.REF.imagery | hard | clean | high | adapt | unreviewed |
 
 <!-- refs:end -->
 

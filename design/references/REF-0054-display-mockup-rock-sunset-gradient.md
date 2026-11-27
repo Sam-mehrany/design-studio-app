@@ -47,6 +47,6 @@ No UI — a device-presentation/mood image. Useful only as a staging and colour 
 
 ## Notes
 
-Original file: `pin-mockup-idea-HNlaqdY6rJIA.jpg`. Concept doubt: blank-wallpaper screen with no UI; filed as mockup because the device is the subject (skill step 0), archetype J.REF.imagery since nothing on screen is a design.
+Original file: `pin-mockup-idea-HNlaqdY6rJIA.jpg`. Concept doubt: blank-wallpaper screen with no UI; filed as mockup because the device is the subject (skill step 0), archetype J.REF.imagery since nothing on screen is a design. Near-duplicate seen 2026-11-27: Pinterest pin https://www.pinterest.com/pin/1024498615378162276/ (board 'mockup-idea', file `pin-mockup-idea-1024498615378162276.jpg`, 564×564) is a square crop of this same ply.supply render — not given its own REF.
 
 **Related:** —
