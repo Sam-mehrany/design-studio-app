@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:45 PM EST (UTC-05:00)
+medium: flat-ui
+platform: none
 ---
 
 # REF-0017 — Case-study slide — IZUM.STUDY footer with a red LED dot-matrix
+
+## Nature
+
+A case-study presentation slide, even though it shows a footer inside it.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

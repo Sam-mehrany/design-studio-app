@@ -4,7 +4,7 @@ id: REF-0040
 title: "Split login with painted illustration and red primary"
 source: "Pinterest board 'login-page-design' (mehrani0146)"
 kind: concept
-concept: web
+concept: component
 captured: 2026-11-26
 image: library/REF-0040.jpg
 archetype: [J.ON.signup]
@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:12 PM EST (UTC-05:00)
+component_type: I.TYPE.auth-form
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0040 — Split login with painted illustration and red primary
+
+## Nature
+
+Split sign-in panel with a painted illustration.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

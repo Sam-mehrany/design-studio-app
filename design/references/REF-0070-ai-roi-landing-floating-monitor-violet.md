@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:40 PM EST (UTC-05:00)
+medium: ai-generated
+platform: desktop
 ---
 
 # REF-0070 — Floating monitor mockup — light AI landing with violet soft-gradient hero panel (AI-generated, garbled copy)
+
+## Nature
+
+Floating monitor; garbled on-screen copy gives it away as image-model output.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

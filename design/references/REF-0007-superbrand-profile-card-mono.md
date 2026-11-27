@@ -19,9 +19,18 @@ sam_reaction: like
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:45 PM EST (UTC-05:00)
+component_type: I.TYPE.profile-card
+medium: flat-ui
+platform: none
 ---
 
 # REF-0007 — Superbrand profile card — monochrome grey-on-black
+
+## Nature
+
+One monochrome profile card on its own.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

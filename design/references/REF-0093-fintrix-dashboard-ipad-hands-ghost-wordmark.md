@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+medium: photo
+platform: tablet
 ---
 
 # REF-0093 — Hands-held iPad mockup — dark fintech dashboard with orange single-bar highlight, ghost wordmark backdrop (Fintrix)
+
+## Nature
+
+iPad held in real hands → photographed.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

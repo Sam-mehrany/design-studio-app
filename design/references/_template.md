@@ -4,7 +4,10 @@ id: REF-0000
 title: ""
 source: ""
 kind: shipped          # shipped | concept | print | brand
-concept: web           # web | mobile | component | slide | imagery | mockup — the artefact depicted; a device in an environment is mockup, see the ingest skill step 0
+concept: web           # web | mobile | component | slide | imagery | mockup — the artefact depicted; see nature.md
+component_type:        # one I.TYPE term (I.TYPE.footer, I.TYPE.navbar, I.TYPE.widget…) — only when concept is component
+medium: flat-ui        # flat-ui | 3d-render | photo | composite | ai-generated | illustration — how the image was made
+platform: desktop      # desktop | mobile | tablet | watch | multi | none — what the UI is designed for
 captured: 2026-01-01
 image: library/.png    # relative to design/references/
 archetype: []          # J terms, e.g. [J.CORE.capture]
@@ -15,6 +18,7 @@ cost: low              # low | med | high
 verdict: adapt         # adopt | adapt | reject
 confidence: med        # the classifier's own confidence: low | med | high
 status: unreviewed     # unreviewed | reviewed | corrected
+analysed_by:           # the analyser that wrote it: claude-opus-5-5, local:qwen2.5vl:7b, Hark
 sam_reaction:          # like | dislike — set by Sam in the studio, never by a classifier
 sam_note:              # his words on why. THIS is what a preference gets written from
 tags: [design/ref]
@@ -22,6 +26,11 @@ modified: 2026-11-24T09:10:52.875Z
 ---
 
 # REF-0000 — <what this is>
+
+## Nature
+
+One line naming the four nature fields in words, then the visual evidence that decided each:
+"Laptop bezel and keyboard on a rock under a hard spotlight → mockup; perfect CG light, no grain → 3d-render."
 
 ## Read
 

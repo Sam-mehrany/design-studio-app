@@ -19,10 +19,25 @@
   "build": {
     "appId": "com.sammehrany.designstudio",
     "productName": "Design Studio",
-    "directories": { "output": "dist", "buildResources": "build" },
-    "files": ["main.js", "preload.js", "server/**/*", "package.json"],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "server/**/*",
+      "package.json"
+    ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "build/icon.ico"
     },
     "nsis": {
@@ -33,5 +48,10 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Design Studio"
     }
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.14.0",
+    "jpeg-js": "^0.4.4",
+    "pngjs": "^7.0.0"
   }
 }

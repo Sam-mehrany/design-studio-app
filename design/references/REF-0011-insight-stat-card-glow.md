@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:45 PM EST (UTC-05:00)
+component_type: I.TYPE.stat-card
+medium: flat-ui
+platform: none
 ---
 
 # REF-0011 — Insight card — thin 89% hero numeral over a corner glow
+
+## Nature
+
+One metric (89%) is the subject of the card → stat card.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

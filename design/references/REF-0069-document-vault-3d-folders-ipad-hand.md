@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:40 PM EST (UTC-05:00)
+medium: photo
+platform: tablet
 ---
 
 # REF-0069 — Hand-held iPad mockup — dark document app with a perspective 3D fan of glass folders and a green frosted panel
+
+## Nature
+
+iPad held in a real hand → photographed; the app is laid out for tablet.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

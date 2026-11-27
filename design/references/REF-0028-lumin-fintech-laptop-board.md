@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:12 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0028 — Fintech cards UI on a laptop with marketing caption band
+
+## Nature
+
+Laptop in a rendered grey set with a marketing caption band overlaid.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

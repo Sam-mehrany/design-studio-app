@@ -131,7 +131,11 @@ it must then say so. `decisions/_template.md`.
 `concept` — web, mobile, component, slide, imagery or mockup — stating what artefact the image
 depicts; a computer, phone or tablet shown in an environment is a mockup, not the UI on its
 screen, so mockups never mix with web UI references. The graph groups by concept first, so a
-slide is never filed as a landing. Scored on the facets, plus the three fields that kill most references —
+slide is never filed as a landing. Three more nature fields follow it — `component_type` (an
+`I.TYPE` term: footer, navbar, auth form, widget…), `medium` (flat UI, 3D render, photo, AI…)
+and `platform` — all defined in [nature.md](nature.md). Every record is also a point in the
+vector database (`tools/vindex.js`), which is derived from the records and can be rebuilt.
+Scored on the facets, plus the three fields that kill most references —
 imagery dependency, RTL survivability, render/download cost — and a verdict.
 
 **BRIEF** — a project's target as facet terms, with its constraints and its rejects. This is

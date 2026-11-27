@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:30 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0047 — Monitor mockup on dark pedestal, industrial 3D-render hero with ghost logo backdrop
+
+## Nature
+
+Monitor on a dark pedestal against a ghost-logo backdrop; rendered set.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

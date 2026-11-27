@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:45 PM EST (UTC-05:00)
+component_type: I.TYPE.pricing-card
+medium: flat-ui
+platform: none
 ---
 
 # REF-0012 — Silver pricing card — metallic $20 numeral and ticket perforation
+
+## Nature
+
+One plan on its own with a $20 numeral and ticket perforation → pricing card.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

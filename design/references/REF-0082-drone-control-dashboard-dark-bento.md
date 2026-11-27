@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0082 — Drone control dashboard concept — dark bento around a live camera feed with HUD overlays, pale-yellow values
+
+## Nature
+
+A whole control dashboard, flat.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

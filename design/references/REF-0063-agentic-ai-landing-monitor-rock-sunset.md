@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:40 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0063 — Monitor-on-rock mockup — dark agentic-AI landing with mint action accent and orange light-streak
+
+## Nature
+
+Monitor on a rock with an orange light streak; rendered.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

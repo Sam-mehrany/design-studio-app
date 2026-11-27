@@ -20,6 +20,8 @@ const path = require('path');
 const { execFile } = require('child_process');
 const lib = require('./lib.js');
 const auth = require('./auth.js');
+const vindex = require('./vindex.js');
+const analyse = require('./analyse.js');
 
 const ROOT = lib.ROOT;
 
@@ -86,8 +88,12 @@ function commit(message, files) {
 const WRITABLE = new Set([
   'sam_reaction', 'sam_note', 'status', 'verdict', 'facets', 'archetype',
   'imagery_dep', 'rtl', 'cost', 'kind', 'title', 'source', 'confidence',
+  'concept', 'component_type', 'medium', 'platform',
 ]);
 const ENUMS = {
+  concept: lib.CONCEPTS,
+  medium: [...lib.MEDIA, ''],
+  platform: [...lib.PLATFORMS, ''],
   sam_reaction: ['like', 'dislike', ''],
   status: ['unreviewed', 'reviewed', 'corrected'],
   verdict: ['adopt', 'adapt', 'reject'],
@@ -109,7 +115,11 @@ function updateRecord(id, updates) {
     if (ENUMS[k] && !Array.isArray(v) && !ENUMS[k].includes(String(v))) {
       throw new Error(`invalid value for ${k}: ${v}`);
     }
-    if (k === 'facets' || k === 'archetype') {
+    if (k === 'component_type') {
+      const ct = String(v || '').trim();
+      if (ct && !lib.componentTypes().some((t) => t.id === ct)) throw new Error(`not a component type: ${ct}`);
+      clean[k] = ct;
+    } else if (k === 'facets' || k === 'archetype') {
       const list = (Array.isArray(v) ? v : [v]).map((x) => String(x).trim()).filter(Boolean);
       const { unknown } = lib.validateTerms(list);
       if (unknown.length) throw new Error(`unknown facet terms: ${unknown.map((u) => u.id).join(', ')}`);
@@ -135,18 +145,47 @@ function updateRecord(id, updates) {
     throw new Error('write altered the record body; rolled back');
   }
   commit(`studio: ${id} ${Object.keys(clean).join(', ')}`, [file]);
+  scheduleSync();
   return fm;
 }
+
+/* ---------- vector index upkeep ---------- */
+
+/**
+ * Keep the vector index in step with the records without blocking a request. A burst of
+ * edits (reacting down the queue) collapses into one sync; a sync only embeds what changed.
+ */
+let syncTimer = null;
+function scheduleSync(delay = 1500) {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    vindex.sync().then((r) => {
+      if (r.embeddedText || r.embeddedImages || r.removed) {
+        process.stdout.write(`vectors: +${r.embeddedText} text, +${r.embeddedImages} image, -${r.removed} (${r.provider}, ${r.ms} ms)\n`);
+      }
+    }).catch((e) => process.stdout.write(`vectors: sync failed — ${e.message}\n`));
+  }, delay);
+}
+
+const searchFilter = (url) => {
+  const f = {};
+  for (const k of ['concept', 'component_type', 'medium', 'platform', 'verdict', 'kind', 'status']) {
+    const all = url.searchParams.getAll(k).flatMap((v) => v.split(',')).map((v) => v.trim()).filter(Boolean);
+    if (all.length) f[k] = all;
+  }
+  return f;
+};
 
 /* ---------- API ---------- */
 
 const refs = () => lib.records('design-ref');
 
-/** Models offered for analysis. Ordered cheapest-first within each tier. */
-const MODELS = [
-  { id: 'hark', name: 'Hark', note: 'analysed by Hark in your chat, following design-ingest', default: true },
-];
-const MODEL_IDS = new Set(MODELS.map((m) => m.id));
+/**
+ * Analysers offered in the Inbox: the Claude models (with a key), every vision model the
+ * local server (Ollama / LM Studio) reports, and Hark. Discovered per request, so pulling a
+ * new local model shows up on the next refresh without a restart.
+ */
+const listModels = () => analyse.listAnalysers();
 
 function inboxCount() {
   const dir = path.join(ROOT, 'references', 'inbox');
@@ -198,6 +237,9 @@ function overview() {
 function refList() {
   return refs().map((r) => ({
     id: r.id, title: r.title, source: r.source, kind: r.kind, image: r.image,
+    concept: lib.conceptOf(r), component_type: lib.componentTypeOf(r),
+    medium: lib.MEDIA.includes(r.medium) ? r.medium : '', platform: lib.PLATFORMS.includes(r.platform) ? r.platform : '',
+    analysed_by: r.analysed_by || '',
     archetype: lib.asList(r.archetype), facets: lib.asList(r.facets),
     imagery_dep: r.imagery_dep, rtl: r.rtl, cost: r.cost, verdict: r.verdict,
     status: r.status, confidence: r.confidence,
@@ -218,8 +260,13 @@ function refDetail(id) {
   return {
     ...r,
     _body: undefined,
+    concept: lib.conceptOf(r),
+    component_type: lib.componentTypeOf(r),
+    componentTypeDetail: lib.componentTypeOf(r) ? describe(lib.componentTypeOf(r)) : null,
+    nature: lib.section(r._body, 'Nature'),
     read: lib.section(r._body, 'Read'),
     why: lib.section(r._body, 'Why the verdict'),
+    reuse: lib.section(r._body, 'How to reuse it'),
     notes: lib.section(r._body, 'Notes'),
     facetDetail: lib.asList(r.facets).map(describe),
     archetypeDetail: lib.asList(r.archetype).map(describe),
@@ -234,7 +281,7 @@ function graph() {
   return {
     nodes: all.map((r) => ({
       id: r.id, title: r.title, kind: r.kind, verdict: r.verdict,
-      concept: lib.conceptOf(r),
+      concept: lib.conceptOf(r), component_type: lib.componentTypeOf(r), medium: r.medium || '',
       archetype: lib.asList(r.archetype)[0] || '', image: r.image,
       reaction: r.sam_reaction || '', terms: lib.asList(r.facets).length,
     })),
@@ -243,86 +290,47 @@ function graph() {
 }
 
 /**
- * Find a spawnable Claude CLI. On Windows the PATH entry is `claude.cmd`, which Node
- * refuses to execFile without a shell — so prefer the real `claude.exe` the npm package
- * ships, and fall back to the bare name on platforms where that just works.
+ * Run an analysis over the inbox.
+ *
+ * Hark: drop a request file for the chat agent to pick up (unchanged).
+ * claude:* / local:*: analyse in this process, one image at a time, with a live log the
+ * Inbox polls. Each finished record is committed with its image; a stop request takes effect
+ * between images, never halfway through writing one.
  */
-function claudeBinary() {
-  const candidates = [];
-  const appData = process.env.APPDATA;
-  if (appData) candidates.push(path.join(appData, 'npm', 'node_modules', '@anthropic-ai', 'claude-code', 'bin', 'claude.exe'));
-  if (process.env.LOCALAPPDATA) candidates.push(path.join(process.env.LOCALAPPDATA, 'node_modules', '@anthropic-ai', 'claude-code', 'bin', 'claude.exe'));
-  const home = process.env.HOME || process.env.USERPROFILE;
-  if (home) {
-    candidates.push(path.join(home, '.npm-global', 'lib', 'node_modules', '@anthropic-ai', 'claude-code', 'bin', 'claude'));
-    candidates.push(path.join(home, '.local', 'bin', 'claude'));
-  }
-  for (const c of candidates) { try { if (fs.existsSync(c)) return c; } catch { /* keep looking */ } }
-  // A Claude CLI on PATH (for example /usr/bin/claude on Linux) — resolve it so
-  // the ingest log names the real binary instead of the bare command. Only the
-  // bare name is matched, so on Windows claude.cmd is never picked up here and
-  // the behaviour there is unchanged.
-  for (const dir of String(process.env.PATH || '').split(path.delimiter)) {
-    if (!dir) continue;
-    const c = path.join(dir, 'claude');
-    try { if (fs.existsSync(c) && fs.statSync(c).isFile()) return c; } catch { /* keep looking */ }
-  }
-  return 'claude';
-}
-
-/** Run /design-ingest headlessly over the inbox via `claude -p`. */
 let ingestJob = null;
-function startIngest(model) {
+async function startIngest(model) {
   if (ingestJob && ingestJob.running) return { ok: false, error: 'an ingest is already running' };
   const { count } = inboxCount();
   if (!count) return { ok: false, error: 'the inbox is empty' };
-  if (model && !MODEL_IDS.has(model)) return { ok: false, error: `unknown model: ${model}` };
-  const chosen = model || MODELS.find((m) => m.default).id;
-  if (chosen === 'hark') {
+  const { analysers } = await listModels();
+  const chosen = analysers.find((m) => m.id === model) || analysers.find((m) => m.default);
+  if (!chosen) return { ok: false, error: `unknown analyser: ${model}` };
+  if (!chosen.available) return { ok: false, error: `${chosen.name} is not available: ${chosen.why}` };
+  if (chosen.id === 'hark') {
     const req = path.join(ROOT, 'references', 'inbox', '.hark-request.json');
     fs.writeFileSync(req, JSON.stringify({ requested: new Date().toISOString(), count }, null, 2));
-    ingestJob = { running: false, started: Date.now(), count, log: [`queued ${count} image(s) for Hark`], code: 0, model: 'Hark',
-      hint: null, queued: true };
+    ingestJob = { running: false, started: Date.now(), count, log: [`queued ${count} image(s) for Hark`], code: 0, model: 'Hark', hint: null, queued: true };
     return { ok: true, count, queued: true };
   }
   const log = [];
-  ingestJob = { running: true, started: Date.now(), count, log, code: null, model: chosen };
-  const args = [
-    '-p', `/design-ingest ${path.join(ROOT, 'references', 'inbox')}`,
-    '--model', chosen,
-    '--permission-mode', 'acceptEdits',
-    '--output-format', 'json',
-    '--allowedTools', 'Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep',
-  ];
-  const bin = claudeBinary();
-  log.push(`spawning: ${bin}`);
-  const child = execFile(bin, args, { cwd: ROOT, maxBuffer: 1 << 24 }, (err, stdout, stderr) => {
-    ingestJob.running = false;
-    ingestJob.code = err ? (err.code ?? 1) : 0;
-    if (err && (err.code === 'ENOENT' || err.code === 'EINVAL')) {
-      ingestJob.hint = `Could not launch the Claude CLI (${err.code}) at ${bin}. Run /design-ingest inside a Claude Code session instead.`;
+  ingestJob = { running: true, started: Date.now(), count, done: 0, log, code: null, model: chosen.name, stop: false };
+  const job = ingestJob;
+  analyse.ingestInbox({
+    analyser: chosen.id,
+    log: (m) => { log.push(m); if (/^  (REF-|✗)/.test(m)) job.done++; },
+    shouldStop: () => job.stop,
+  }).then((r) => {
+    job.code = r.failed.length && !r.written.length ? 1 : 0;
+    job.written = r.written.map((w) => w.id);
+    if (r.failed.length) job.hint = `${r.failed.length} image(s) failed and are still in the inbox: ${r.failed[0].error}`;
+    const t = r.tokens;
+    if (t.input || t.output) log.push(`tokens: ${t.input} in, ${t.output} out${t.cache_read ? `, ${t.cache_read} from cache` : ''}`);
+    if (r.written.length) {
+      const files = r.written.flatMap((w) => [w.file, w.image]).concat(path.join(ROOT, 'references', 'index.md'));
+      commit(`Ingest ${r.written.length} refs (${r.written[0].id}–${r.written[r.written.length - 1].id}), analysed by ${r.written[0].by}`, files);
     }
-    // `claude -p` exits 0 even when the run itself failed, so read its own verdict.
-    let parsed = null;
-    try { parsed = JSON.parse(String(stdout || '')); } catch { /* not json */ }
-    if (parsed) {
-      if (parsed.is_error) {
-        ingestJob.code = 1;
-        const msg = String(parsed.result || parsed.terminal_reason || 'unknown failure');
-        ingestJob.hint = /authenticate|oauth|login/i.test(msg)
-          ? 'The Claude CLI could not authenticate on its own. Run `claude` once in a terminal to refresh its login, then try again — or just run `/design-ingest` inside a Claude Code session, which always works.'
-          : null;
-        log.push(msg);
-      } else if (parsed.result) {
-        log.push(String(parsed.result).slice(-4000));
-      }
-    } else if (stdout) {
-      log.push(String(stdout).slice(-4000));
-    }
-    if (stderr) log.push(String(stderr).slice(-2000));
-    if (err && !stdout && !stderr) log.push(String(err.message));
-  });
-  ingestJob.pid = child.pid;
+  }).catch((e) => { job.code = 1; job.hint = e.message; log.push(e.message); })
+    .finally(() => { job.running = false; });
   return { ok: true, count };
 }
 
@@ -461,7 +469,37 @@ const server = http.createServer(async (req, res) => {
       commit(`studio: candidate reason for ${term}`, [file]);
       return json(res, 200, { ok: true, file: path.relative(ROOT, file).replace(/\\/g, '/') });
     }
-    if (route === '/api/models') return json(res, 200, { models: MODELS });
+    if (route === '/api/models') {
+      const m = await listModels();
+      return json(res, 200, { models: m.analysers, local: m.local });
+    }
+
+    /* --- the vector database --- */
+    if (route === '/api/search') {
+      return json(res, 200, await vindex.search(url.searchParams.get('q'), {
+        filter: searchFilter(url), limit: Math.min(100, Number(url.searchParams.get('limit')) || 40),
+      }));
+    }
+    if (route.startsWith('/api/similar/')) {
+      const id = decodeURIComponent(route.slice('/api/similar/'.length));
+      const space = ['text', 'image'].includes(url.searchParams.get('by')) ? url.searchParams.get('by') : undefined;
+      return json(res, 200, await vindex.similar(id, { filter: searchFilter(url), limit: 12, space }));
+    }
+    if (route === '/api/vectors') return json(res, 200, await vindex.status());
+    if (route === '/api/vectors/sync' && req.method === 'POST') {
+      const body = JSON.parse((await readBody(req, 1 << 12)).toString('utf8') || '{}');
+      vindex.sync({ rebuild: !!body.rebuild }).catch(() => { /* surfaced via /api/vectors */ });
+      return json(res, 200, { ok: true, started: true });
+    }
+    if (route === '/api/nature') {
+      // The nature vocabulary for the UI's editors and filters.
+      return json(res, 200, {
+        concepts: lib.CONCEPTS.map((c) => ({ id: c, name: lib.CONCEPT_LABELS[c] })),
+        componentTypes: lib.componentTypes(),
+        media: lib.MEDIA.map((m) => ({ id: m, name: lib.MEDIUM_LABELS[m] })),
+        platforms: lib.PLATFORMS,
+      });
+    }
     if (route === '/api/inbox/remove' && req.method === 'POST') {
       const body = JSON.parse((await readBody(req, 1 << 16)).toString('utf8') || '{}');
       const name = path.basename(String(body.name || ''));
@@ -473,13 +511,18 @@ const server = http.createServer(async (req, res) => {
     }
     if (route === '/api/ingest' && req.method === 'POST') {
       const body = JSON.parse((await readBody(req, 1 << 16)).toString('utf8') || '{}');
-      return json(res, 200, startIngest(body.model));
+      return json(res, 200, await startIngest(body.model));
+    }
+    if (route === '/api/ingest/stop' && req.method === 'POST') {
+      if (ingestJob && ingestJob.running) ingestJob.stop = true;
+      return json(res, 200, { ok: true });
     }
     if (route === '/api/ingest/status') {
       return json(res, 200, ingestJob
         ? {
           running: ingestJob.running, count: ingestJob.count, code: ingestJob.code,
-          model: ingestJob.model || null, queued: !!ingestJob.queued,
+          model: ingestJob.model || null, queued: !!ingestJob.queued, done: ingestJob.done || 0,
+          written: ingestJob.written || [], stopping: !!ingestJob.stop,
           hint: ingestJob.hint || null, log: ingestJob.log.join('\n').slice(-4000),
         }
         : { running: false });
@@ -525,4 +568,6 @@ server.listen(PORT, HOST, () => {
     `  ui:     ${UI}${UI.startsWith(ROOT) ? '  (live from the vault)' : '  (bundled)'}\n` +
     `  refs:   ${refs().length}    inbox: ${count}    git: ${gitAvailable ? 'yes' : 'no'}\n`
   );
+  // Bring the vector index up to date in the background: only new or changed refs embed.
+  scheduleSync(200);
 });

@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+medium: 3d-render
+platform: multi
 ---
 
 # REF-0090 — Monitor-and-phone mockup — dark smart-park IoT decision dashboard, isometric 3D campus with alert callouts
+
+## Nature
+
+Monitor and phone together showing one product; rendered.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

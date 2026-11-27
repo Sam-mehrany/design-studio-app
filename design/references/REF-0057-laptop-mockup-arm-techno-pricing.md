@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:30 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0057 — Laptop on mounting arm over lavender-to-rust gradient, techno-italic pricing screen
+
+## Nature
+
+Laptop on a mounting arm over a gradient; rendered.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

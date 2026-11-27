@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:30 PM EST (UTC-05:00)
+medium: photo
+platform: desktop
 ---
 
 # REF-0048 — Studio display mockup on desk, white Swiss hairline grid with wide caps
+
+## Nature
+
+Studio display on a desk with two people in silhouette → photographed scene (could be a render — low certainty).
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

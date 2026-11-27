@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:30 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0046 — Laptop mockup over ribbed grey slabs, "Velocity." running-photo hero
+
+## Nature
+
+Laptop over ribbed grey slabs under hard CG light.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

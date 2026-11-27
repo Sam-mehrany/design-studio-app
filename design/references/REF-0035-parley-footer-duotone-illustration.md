@@ -4,7 +4,7 @@ id: REF-0035
 title: "Footer with cobalt-and-cream duotone illustration"
 source: "Pinterest board 'footer-design' (mehrani0146)"
 kind: concept
-concept: web
+concept: component
 captured: 2026-11-26
 image: library/REF-0035.jpg
 archetype: [J.ACQ.landing]
@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:12 PM EST (UTC-05:00)
+component_type: I.TYPE.footer
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0035 — Footer with cobalt-and-cream duotone illustration
+
+## Nature
+
+Footer on its own with a duotone illustration.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

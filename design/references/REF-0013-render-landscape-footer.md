@@ -4,7 +4,7 @@ id: REF-0013
 title: "Footer card sitting on a 3D-rendered orange landscape (HONK!)"
 source: "Pinterest board 'component-design-idea' (mehrani0146)"
 kind: concept
-concept: web
+concept: component
 captured: 2026-11-26
 image: library/REF-0013.jpg
 archetype: [J.ACQ.landing]
@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:45 PM EST (UTC-05:00)
+component_type: I.TYPE.footer
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0013 — Footer card sitting on a 3D-rendered orange landscape
+
+## Nature
+
+A footer card whose lower half is a rendered landscape; the landscape is the footer's own artwork, not a presentation backdrop.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

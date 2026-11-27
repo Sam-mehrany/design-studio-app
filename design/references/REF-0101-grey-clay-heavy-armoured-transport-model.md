@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+medium: 3d-render
+platform: none
 ---
 
 # REF-0101 — Grey untextured 3D model — riveted slab-armour transport with sponson guns (sculpt / print preview)
+
+## Nature
+
+Grey untextured 3D model — a sculpt preview, no UI.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

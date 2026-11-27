@@ -481,14 +481,15 @@ function writeRefIndex() {
       const link = `[${r.id}](${path.basename(r._file)})`;
       const arch = asList(r.archetype).join(', ') || '—';
       const reaction = r.sam_reaction ? ` ${r.sam_reaction}` : '';
-      return `| ${link} | ${r.title || ''} | ${r.kind || ''} | ${arch} | ${r.imagery_dep || ''} | `
+      const nature = [conceptOf(r), (termIndex().get(componentTypeOf(r).toLowerCase()) || {}).name, r.medium].filter(Boolean).join(' · ') || '—';
+      return `| ${link} | ${r.title || ''} | ${nature} | ${r.kind || ''} | ${arch} | ${r.imagery_dep || ''} | `
         + `${r.rtl || ''} | ${r.cost || ''} | ${r.verdict || ''} | ${r.status || ''}${reaction} |`;
     }).join('\n')
-    : '| | | | | | | | | |';
+    : '| | | | | | | | | | |';
 
   const table = [
-    '| ID | What | Kind | Archetype | Imagery dep. | RTL | Cost | Verdict | Review |',
-    '|---|---|---|---|---|---|---|---|---|',
+    '| ID | What | Nature | Kind | Archetype | Imagery dep. | RTL | Cost | Verdict | Review |',
+    '|---|---|---|---|---|---|---|---|---|---|',
     rows,
   ].join('\n');
 
@@ -549,6 +550,32 @@ const CONCEPT_WEIGHT = 7.0;
 const ARCHETYPE_WEIGHT = 2.5;
 /** Partial credit for sharing an archetype dimension (J.PRES.slide ~ J.PRES.deck). */
 const ARCHETYPE_DIM_WEIGHT = 1.5;
+/** Inside the component concept, the type (footer, navbar, card) is the next grouping signal. */
+const COMPONENT_TYPE_WEIGHT = 2.5;
+
+/* ---------- nature: component type, medium, platform (see nature.md) ---------- */
+
+/** How the image was made — what separates a flat design from a 3D-drafted mockup idea. */
+const MEDIA = ['flat-ui', '3d-render', 'photo', 'composite', 'ai-generated', 'illustration'];
+/** What the UI is designed for, not what it is shown on. */
+const PLATFORMS = ['desktop', 'mobile', 'tablet', 'watch', 'multi', 'none'];
+const MEDIUM_LABELS = {
+  'flat-ui': 'Flat UI', '3d-render': '3D render', photo: 'Photo', composite: 'Composite',
+  'ai-generated': 'AI-generated', illustration: 'Illustration',
+};
+
+/** The I.TYPE vocabulary — component types, parsed from facet I like every other term. */
+function componentTypes() {
+  const f = parseFacet('I');
+  const dim = f && f.dimensions.find((d) => d.id === 'I.TYPE');
+  return dim ? dim.terms.map((t) => ({ id: t.id, name: t.name, cue: t.definition })) : [];
+}
+
+/** A record's component type, or '' — only meaningful when the concept is component. */
+function componentTypeOf(r) {
+  const raw = String((r && r.component_type) || '').replace(/`/g, '').trim();
+  return /^I\.TYPE\.[a-z0-9-]+$/.test(raw) ? raw : '';
+}
 
 function conceptOf(r) {
   const raw = String((r && r.concept) || '').trim().toLowerCase();
@@ -588,7 +615,10 @@ function conceptOf(r) {
 function vectors(refs) {
   const docs = refs.map((r) => {
     const set = new Set([...asList(r.facets), ...asList(r.archetype)].map((t) => String(t).trim()).filter(Boolean));
-    return { id: r.id, terms: set, concept: conceptOf(r), archetype: new Set(asList(r.archetype).map((t) => String(t).trim()).filter(Boolean)) };
+    // Two footers should sit together even when one is cream and one is black.
+    const ct = componentTypeOf(r);
+    if (ct) set.add(ct);
+    return { id: r.id, terms: set, concept: conceptOf(r), archetype: new Set(asList(r.archetype).map((t) => String(t).trim()).filter(Boolean)), ctype: ct };
   });
   const N = docs.length || 1;
   const df = new Map();
@@ -600,7 +630,7 @@ function vectors(refs) {
     const v = new Map();
     let sq = 0;
     for (const t of d.terms) {
-      const w = (idf.get(t) || 0) * (d.archetype.has(t) ? ARCHETYPE_WEIGHT : 1);
+      const w = (idf.get(t) || 0) * (d.archetype.has(t) ? ARCHETYPE_WEIGHT : t === d.ctype ? COMPONENT_TYPE_WEIGHT : 1);
       v.set(t, w); sq += w * w;
     }
     // Archetype dimension (J.PRES, J.ACQ, …): a slide and a deck share a job family
@@ -726,4 +756,5 @@ module.exports = {
   findTermRow, setStance, MARKS,
   queueEntry, appendQueue, readQueue, removeQueueEntry, nextId, writeRefIndex,
   vectors, cosine, neighbours, edges, candidatePrefs, conceptOf, CONCEPTS, CONCEPT_LABELS,
+  MEDIA, PLATFORMS, MEDIUM_LABELS, componentTypes, componentTypeOf,
 };

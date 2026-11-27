@@ -4,6 +4,51 @@
 A–H get applied to. Its value is coverage: a component missing from a system does not
 announce itself, it just gets improvised differently on every screen.
 
+## I.TYPE — Component type
+
+What a `concept: component` reference *is*. Exactly one per record, in the record's
+`component_type:` field, so the library can answer "show me every footer" without reading
+titles. Pick the type of the **outermost** thing in the shot: a pricing section holding three
+cards is `pricing-section`, not `card`. A record that shows a whole screen has no component
+type. The recognition cue is what the classifier looks for; see [nature](../nature.md).
+
+| ID | Term | How to recognise it | Stance |
+|---|---|---|---|
+| `I.TYPE.navbar` | Navigation bar / header | Horizontal strip across the top of a page: logo, nav links, a CTA; the content below is cropped or absent | – |
+| `I.TYPE.sidebar` | Sidebar navigation | Vertical rail of grouped nav items, usually app chrome beside an empty or cropped canvas | – |
+| `I.TYPE.tab-bar` | Mobile tab bar | Bottom bar of 3–5 icon+label destinations on a phone frame | – |
+| `I.TYPE.hero` | Hero section | The first viewport of a page shown on its own: headline, sub, CTA, visual; nothing below the fold | – |
+| `I.TYPE.feature-section` | Feature section | A row or grid of feature tiles under a section heading, cropped from a longer page | – |
+| `I.TYPE.bento-grid` | Bento grid | Irregular grid of tiles of different spans that reads as one composition | – |
+| `I.TYPE.pricing-section` | Pricing section | Two or more plans side by side for comparison, with prices and a CTA each | – |
+| `I.TYPE.testimonial` | Testimonial / social proof | Quote, avatar, name and role; or a wall of them; or a logo cloud | – |
+| `I.TYPE.cta-banner` | CTA banner | A single band whose only job is one call to action, between sections or above a footer | – |
+| `I.TYPE.footer` | Footer | Bottom of a page: link columns, legal/copyright row, often a sign-off CTA or giant wordmark | – |
+| `I.TYPE.card` | Card (generic) | One bounded surface holding content, not a more specific card type below | – |
+| `I.TYPE.profile-card` | Profile card | A person or brand: avatar or banner, name, handle/bio, follow or contact action | – |
+| `I.TYPE.pricing-card` | Pricing card | One plan on its own: price numeral, period, feature list or perforation, one CTA | – |
+| `I.TYPE.stat-card` | Stat / KPI card | One metric is the subject: hero numeral, label, delta or sparkline | – |
+| `I.TYPE.listing-card` | Listing / item card | One item in a collection: job, product, property, file — title, meta, an action | – |
+| `I.TYPE.media-card` | Media / feature tile | Image or render leads, short caption; the visual is the content | – |
+| `I.TYPE.widget` | Widget | A glanceable OS or dashboard widget — iOS/Android home-screen, lock-screen, watch complication, or a dashboard tile with live data and no page around it | – |
+| `I.TYPE.chart` | Chart / data viz | The visualisation itself is the subject, axes and legend included | – |
+| `I.TYPE.table` | Table / data grid | Rows and columns of records with a header row | – |
+| `I.TYPE.list` | List | Repeating rows (settings, messages, tracks) without a table header | – |
+| `I.TYPE.auth-form` | Auth form | Sign-in, sign-up, OTP or reset: credential fields plus one submit, often a split panel | – |
+| `I.TYPE.form` | Form | Any other data-entry form: fields, labels, validation, submit | – |
+| `I.TYPE.input-control` | Input control | One control in isolation: field, select, slider, stepper, toggle, date picker | – |
+| `I.TYPE.button` | Button set | Buttons or CTAs as the subject, often showing variants or states | – |
+| `I.TYPE.menu` | Menu / dropdown | Floating list of actions or options anchored to a trigger; command palette | – |
+| `I.TYPE.modal` | Modal / dialog | Centred overlay with a scrim, title, body and actions | – |
+| `I.TYPE.sheet` | Bottom sheet / drawer | Panel sliding from an edge, with a grab handle or edge anchoring | – |
+| `I.TYPE.notification` | Toast / notification | Small transient message, banner or push-style alert | – |
+| `I.TYPE.chat` | Chat / assistant panel | Message bubbles or AI answer blocks with a composer | – |
+| `I.TYPE.media-player` | Media player | Transport controls, scrubber, artwork | – |
+| `I.TYPE.calendar` | Calendar / scheduler | Day, week or month grid; time slots; date ranges | – |
+| `I.TYPE.empty-state` | Empty / error state | Illustration or icon, one explanatory line, one recovery action | – |
+| `I.TYPE.onboarding-step` | Onboarding step | One step of a flow: progress dots or stepper, one ask, next/skip | – |
+| `I.TYPE.ui-kit` | UI kit / component sheet | Many unrelated components laid out as a sheet or style guide | – |
+
 ## I.STATE — The state matrix
 
 No component is done until every row that applies to it is designed. This is the single

@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:40 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0066 — Low-angle laptop mockup — light agency site, ALL-CAPS statement headline, mono nav, two-up photography
+
+## Nature
+
+Low-angle laptop in a dark rendered set.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

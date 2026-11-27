@@ -4,7 +4,7 @@ id: REF-0038
 title: "Footer as frosted-glass panel over a surreal photo"
 source: "Pinterest board 'footer-design' (mehrani0146)"
 kind: concept
-concept: web
+concept: component
 captured: 2026-11-26
 image: library/REF-0038.jpg
 archetype: [J.ACQ.landing]
@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:12 PM EST (UTC-05:00)
+component_type: I.TYPE.footer
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0038 — Footer as frosted-glass panel over a surreal photo
+
+## Nature
+
+Footer as a frosted panel over a photo that belongs to the design.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

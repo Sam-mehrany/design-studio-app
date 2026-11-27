@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:12 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0024 — Security dashboard on a studio monitor
+
+## Nature
+
+Studio monitor on a stand in a seamless grey set, perfect soft light, no grain → rendered mockup.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

@@ -19,9 +19,18 @@ sam_reaction: like
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:45 PM EST (UTC-05:00)
+component_type: I.TYPE.card
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0005 — Feature tile — a light card and a dark card nested in a white tray
+
+## Nature
+
+A feature tile — light card and dark card nested in a tray — cropped from a landing page.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

@@ -43,8 +43,11 @@ const TOOLS = [
     description: 'A surface brief: its DNA string, constraints, archetypes in priority order and explicit reject line. Call with no id to list the briefs.',
     inputSchema: { type: 'object', properties: { id: { type: 'string' } } } },
   { name: 'design_refs',
-    description: 'Query the analysed reference library by archetype, verdict, kind, imagery dependency, RTL survivability, cost, review status or facet term.',
-    inputSchema: { type: 'object', properties: { archetype: { type: 'string' }, verdict: { type: 'string' }, kind: { type: 'string' }, imagery_dep: { type: 'string' }, rtl: { type: 'string' }, cost: { type: 'string' }, status: { type: 'string' }, sam_reaction: { type: 'string', description: 'like | dislike' }, facet: { type: 'string' }, limit: { type: 'number' } } } },
+    description: 'Query the analysed reference library by nature (concept, component_type, medium, platform), archetype, verdict, kind, imagery dependency, RTL survivability, cost, review status or facet term.',
+    inputSchema: { type: 'object', properties: { concept: { type: 'string', description: 'web | mobile | component | slide | imagery | mockup' }, component_type: { type: 'string', description: 'An I.TYPE term, e.g. I.TYPE.footer' }, medium: { type: 'string', description: 'flat-ui | 3d-render | photo | composite | ai-generated | illustration' }, platform: { type: 'string' }, archetype: { type: 'string' }, verdict: { type: 'string' }, kind: { type: 'string' }, imagery_dep: { type: 'string' }, rtl: { type: 'string' }, cost: { type: 'string' }, status: { type: 'string' }, sam_reaction: { type: 'string', description: 'like | dislike' }, facet: { type: 'string' }, limit: { type: 'number' } } } },
+  { name: 'design_search',
+    description: 'Search the reference library by meaning through its vector database: "dark footer with a giant ghost wordmark", "3D-rendered laptop on stone". Optional nature filters narrow it. Use this before ingesting to find near-duplicates, and when asked what the library holds on an idea.',
+    inputSchema: { type: 'object', properties: { query: { type: 'string' }, concept: { type: 'string' }, component_type: { type: 'string' }, medium: { type: 'string' }, platform: { type: 'string' }, limit: { type: 'number' } }, required: ['query'] } },
   { name: 'design_candidates',
     description: "Preferences waiting to be written up: reasons Sam gave in the studio (evidence, ready to become PREF records) and, separately, the facet terms his reactions lean on (not evidence). Check this before design work — a queued reason is a preference he has already stated.",
     inputSchema: { type: 'object', properties: {} } },
@@ -172,17 +175,32 @@ function toolBrief(a) {
   return b ? `# ${b.id}\n\n${b._body}` : `No brief "${a.id}". Available: ${list.map((x) => x.id).join(', ')}`;
 }
 
+async function toolSearch(a) {
+  const vindex = require('./vindex.js');
+  await vindex.sync();
+  const filter = { concept: a.concept, component_type: a.component_type, medium: a.medium, platform: a.platform };
+  const r = await vindex.search(a.query, { filter, limit: a.limit || 12 });
+  if (!r.hits.length) return 'Nothing in the vector index matches.';
+  return `${r.hits.length} by ${r.semantic ? 'meaning' : 'keywords'} (${r.provider}):\n\n` + r.hits.map((h, i) => {
+    const p = h.payload;
+    return `${i + 1}. **${h.id}** ${p.title} — ${[p.concept, p.component_type, p.medium, p.platform].filter(Boolean).join(' · ')} · ${p.verdict} · ${p.status}`;
+  }).join('\n');
+}
+
 function toolRefs(a) {
   let list = records('design-ref');
   const eq = (k) => { if (a[k]) { const v = String(a[k]).toLowerCase(); list = list.filter((r) => String(r[k] || '').toLowerCase() === v); } };
-  ['verdict', 'kind', 'imagery_dep', 'rtl', 'cost', 'status', 'sam_reaction'].forEach(eq);
+  ['verdict', 'kind', 'imagery_dep', 'rtl', 'cost', 'status', 'sam_reaction', 'medium', 'platform'].forEach(eq);
+  if (a.concept) list = list.filter((r) => lib.conceptOf(r) === String(a.concept).toLowerCase());
+  if (a.component_type) list = list.filter((r) => lib.componentTypeOf(r).toLowerCase() === String(a.component_type).toLowerCase());
   if (a.archetype) { const v = String(a.archetype).toLowerCase(); list = list.filter((r) => (r.archetype || []).some((x) => String(x).toLowerCase().startsWith(v))); }
   if (a.facet) { const v = String(a.facet).toLowerCase(); list = list.filter((r) => (r.facets || []).some((x) => String(x).toLowerCase().startsWith(v))); }
   if (!list.length) return records('design-ref').length ? 'No references match those filters.' : 'The reference library is empty — nothing has been ingested yet.';
   return `${list.length} match:\n\n` + list.slice(0, a.limit || 40).map((r) => {
     const reaction = r.sam_reaction ? ` · Sam: ${r.sam_reaction}` : '';
     const note = r.sam_note ? `\n  Sam's words: "${r.sam_note}"` : '';
-    return `- **${r.id}** ${r.title} (${r.kind}) — ${(r.archetype || []).join(', ')}\n`
+    const nat = [lib.conceptOf(r), lib.componentTypeOf(r), r.medium, r.platform].filter(Boolean).join(' · ');
+    return `- **${r.id}** ${r.title} (${r.kind}) — ${nat} — ${(r.archetype || []).join(', ')}\n`
       + `  verdict: ${r.verdict} · photo-dep: ${r.imagery_dep} · rtl: ${r.rtl} · cost: ${r.cost} · ${r.status}${reaction}\n`
       + `  terms: ${(r.facets || []).join(', ')}${note}\n  file: ${r._file}`;
   }).join('\n');
@@ -236,7 +254,7 @@ function toolRubric() {
 const DISPATCH = {
   design_overview: toolOverview, design_facet: toolFacet, design_terms: toolTerms,
   design_validate: toolValidate, design_prefs: toolPrefs, design_brief: toolBrief,
-  design_refs: toolRefs, design_record: toolRecord, design_rubric: toolRubric,
+  design_refs: toolRefs, design_search: toolSearch, design_record: toolRecord, design_rubric: toolRubric,
   design_candidates: toolCandidates,
 };
 
@@ -261,12 +279,11 @@ function handle(msg) {
   if (method === 'tools/call') {
     const fn = DISPATCH[params && params.name];
     if (!fn) return err(id, -32602, `Unknown tool: ${params && params.name}`);
-    try {
-      const text = fn((params && params.arguments) || {});
-      return ok(id, { content: [{ type: 'text', text: String(text) }] });
-    } catch (e) {
-      return ok(id, { content: [{ type: 'text', text: `Error: ${e.message}` }], isError: true });
-    }
+    // Tools may be async (design_search talks to the vector database).
+    Promise.resolve().then(() => fn((params && params.arguments) || {}))
+      .then((text) => ok(id, { content: [{ type: 'text', text: String(text) }] }))
+      .catch((e) => ok(id, { content: [{ type: 'text', text: `Error: ${e.message}` }], isError: true }));
+    return;
   }
   if (id !== undefined) return err(id, -32601, `Method not found: ${method}`);
 }

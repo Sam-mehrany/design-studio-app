@@ -4,7 +4,7 @@ id: REF-0037
 title: "Black footer: monospace display, grey/white split headline, particle render"
 source: "Pinterest board 'footer-design' (mehrani0146)"
 kind: concept
-concept: web
+concept: component
 captured: 2026-11-26
 image: library/REF-0037.jpg
 archetype: [J.ACQ.landing]
@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:12 PM EST (UTC-05:00)
+component_type: I.TYPE.footer
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0037 — Black footer: monospace display, grey/white split headline, particle render
+
+## Nature
+
+Footer on its own: headline + CTA, link columns, copyright row.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

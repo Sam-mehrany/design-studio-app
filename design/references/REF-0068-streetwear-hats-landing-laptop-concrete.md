@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:40 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0068 — Laptop-on-concrete mockup — black streetwear store hero with heavy caps headline and cyan accent
+
+## Nature
+
+Laptop on a concrete block; rendered.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

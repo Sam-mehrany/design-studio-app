@@ -4,7 +4,7 @@ id: REF-0084
 title: "Footer — black CTA band with top radial glow, white link card, giant ghost wordmark behind (Graphy)"
 source: "Pinterest board 'footer-design' (mehrani0146)"
 kind: concept
-concept: web
+concept: component
 captured: 2026-11-27
 image: library/REF-0084.jpg
 archetype: [J.ACQ.landing]
@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+component_type: I.TYPE.footer
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0084 — Footer — black CTA band with top radial glow, white link card, giant ghost wordmark behind (Graphy)
+
+## Nature
+
+Footer on its own: CTA band, link card, ghost wordmark.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:45 PM EST (UTC-05:00)
+medium: flat-ui
+platform: mobile
 ---
 
 # REF-0014 — Apple Podcasts show page — whole screen tinted from the artwork
+
+## Nature
+
+A whole iOS screen, screenshotted flat.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

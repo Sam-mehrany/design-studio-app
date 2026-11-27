@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:40 PM EST (UTC-05:00)
+medium: photo
+platform: desktop
 ---
 
 # REF-0067 — Hands-holding-laptop mockup on white — skincare store with giant thin "071" wordmark and editorial photography
+
+## Nature
+
+Laptop held in real hands on white → photographed.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

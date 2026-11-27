@@ -4,7 +4,7 @@ id: REF-0081
 title: "Agency pricing section — nested white-in-grey plan cards, black full-width CTA, black partnership band"
 source: "Pinterest board 'component-design-idea' (mehrani0146)"
 kind: concept
-concept: web
+concept: component
 captured: 2026-11-27
 image: library/REF-0081.jpg
 archetype: [J.ACQ.pricing]
@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+component_type: I.TYPE.pricing-section
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0081 — Agency pricing section — nested white-in-grey plan cards, black full-width CTA, black partnership band
+
+## Nature
+
+Plans side by side plus a partnership band, cropped from a page → pricing section.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

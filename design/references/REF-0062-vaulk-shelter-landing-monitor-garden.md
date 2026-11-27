@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:40 PM EST (UTC-05:00)
+medium: photo
+platform: desktop
 ---
 
 # REF-0062 — Monitor-on-desk mockup — full-bleed landscape hero with centred sans headline, brand cards on desk
+
+## Nature
+
+Monitor on a desk in a real interior with planting → photographed (low certainty).
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

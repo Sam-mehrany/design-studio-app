@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+medium: composite
+platform: desktop
 ---
 
 # REF-0094 — Meeting dashboard concept floating over a meadow photo — light cards, neon-lime highlight, coloured row stripes (huddly)
+
+## Nature
+
+A flat dashboard floating over a meadow photo, no device → composite.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

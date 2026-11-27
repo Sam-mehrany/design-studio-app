@@ -4,7 +4,7 @@ id: REF-0039
 title: "Split login: form left, dark photo panel with overlaid claim"
 source: "Pinterest board 'login-page-design' (mehrani0146)"
 kind: concept
-concept: web
+concept: component
 captured: 2026-11-26
 image: library/REF-0039.jpg
 archetype: [J.ON.signup]
@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:12 PM EST (UTC-05:00)
+component_type: I.TYPE.auth-form
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0039 — Split login: form left, dark photo panel with overlaid claim
+
+## Nature
+
+Split sign-in panel: credential form plus a photo panel → auth form, not a page.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

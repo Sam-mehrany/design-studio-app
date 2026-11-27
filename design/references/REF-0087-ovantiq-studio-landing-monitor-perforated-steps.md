@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0087 — Studio display on perforated steps — white studio landing, heavy ALL-CAPS statement, black 3D-ribbon panel (Ovantiq)
+
+## Nature
+
+Studio display on perforated steps; rendered.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+component_type: I.TYPE.sidebar
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0080 — Sidebar navigation in a light/dark pair — grouped caps sections, lime action and upgrade pill (Qanun)
+
+## Nature
+
+A sidebar navigation rail in a light/dark pair, no canvas beside it.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

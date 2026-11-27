@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:40 PM EST (UTC-05:00)
+medium: ai-generated
+platform: none
 ---
 
 # REF-0071 — AI render — white and black faceted tank in a white studio hangar
+
+## Nature
+
+Vehicle render with no UI; image-model output.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

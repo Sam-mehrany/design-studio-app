@@ -124,7 +124,12 @@ async function startServer(vault) {
   const port = await freePort(7391);
   const entry = serverEntry(vault);
   child = fork(entry, ['--port', String(port)], {
-    env: { ...process.env, DESIGN_VAULT: vault, ELECTRON_RUN_AS_NODE: '1' },
+    // NODE_PATH: the vault's own server (D:\Memory\design\tools) has no node_modules beside
+    // it, so point it at the app's — that is where the Anthropic SDK and the image codecs live.
+    env: {
+      ...process.env, DESIGN_VAULT: vault, ELECTRON_RUN_AS_NODE: '1',
+      NODE_PATH: [path.join(__dirname, 'node_modules'), process.env.NODE_PATH].filter(Boolean).join(path.delimiter),
+    },
     stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
   });
   child.stdout.on('data', (b) => process.stdout.write(`[server] ${b}`));

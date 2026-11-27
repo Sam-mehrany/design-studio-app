@@ -49,16 +49,33 @@ const S = {
   refs: [],
   selected: null,
   detail: null,
-  filters: { archetype: new Set(), verdict: new Set(), kind: new Set(), imagery_dep: new Set(), rtl: new Set(), cost: new Set(), status: new Set(), reaction: new Set(), term: new Set() },
+  filters: { concept: new Set(), component_type: new Set(), medium: new Set(), platform: new Set(), archetype: new Set(), verdict: new Set(), kind: new Set(), imagery_dep: new Set(), rtl: new Set(), cost: new Set(), status: new Set(), reaction: new Set(), term: new Set() },
   search: '',
+  semantic: null,        // { query, order: Map(id -> rank), provider, semantic } from the vector DB
+  nature: null,          // vocabulary for the nature fields, from /api/nature
+  vectors: null,         // vector index status
 };
 
 const FILTER_FIELDS = [
+  ['concept', 'What it is'], ['component_type', 'Component type'], ['medium', 'Made as'], ['platform', 'Designed for'],
   ['archetype', 'Archetype'], ['verdict', 'Verdict'], ['kind', 'Kind'],
   ['imagery_dep', 'Survives without photo'], ['rtl', 'RTL'], ['cost', 'Cost'],
   ['status', 'Review'], ['reaction', 'My reaction'],
 ];
 const DEP_LABEL = { none: 'yes — no imagery', soft: 'photo is decoration', hard: 'no — collapses' };
+
+/** Human names for the nature fields: I.TYPE.footer → Footer, 3d-render → 3D render. */
+function natureLabel(field, v) {
+  const n = S.nature;
+  if (!v) return '—';
+  if (!n) return v;
+  if (field === 'concept') return (n.concepts.find((c) => c.id === v) || {}).name || v;
+  if (field === 'component_type') return (n.componentTypes.find((c) => c.id === v) || {}).name || v;
+  if (field === 'medium') return (n.media.find((m) => m.id === v) || {}).name || v;
+  return v;
+}
+const chipLabel = (field, v) => (field === 'imagery_dep' ? (DEP_LABEL[v] || v)
+  : ['concept', 'component_type', 'medium'].includes(field) ? natureLabel(field, v) : String(v));
 
 function valuesOf(field) {
   const tally = new Map();
@@ -82,7 +99,8 @@ function matches(r) {
     if (!vals.some((v) => want.has(v))) return false;
   }
   if (S.filters.term.size && ![...S.filters.term].every((t) => r.facets.includes(t) || r.archetype.includes(t))) return false;
-  if (S.search) {
+  if (S.semantic && !S.semantic.order.has(r.id)) return false;
+  if (S.search && !S.semantic) {
     const q = S.search.toLowerCase();
     const hay = [r.id, r.title, r.source, ...r.facets, ...r.archetype].join(' ').toLowerCase();
     if (!hay.includes(q)) return false;
@@ -90,7 +108,23 @@ function matches(r) {
   return true;
 }
 
-const filtered = () => S.refs.filter(matches);
+const filtered = () => {
+  const list = S.refs.filter(matches);
+  if (S.semantic) list.sort((a, b) => S.semantic.order.get(a.id) - S.semantic.order.get(b.id));
+  return list;
+};
+
+/** Ask the vector database. Rail filters still apply on top of the ranked hits. */
+async function semanticSearch(q) {
+  q = String(q || '').trim();
+  if (!q) { S.semantic = null; render(); return; }
+  try {
+    const r = await api('/api/search?limit=100&q=' + encodeURIComponent(q));
+    S.semantic = { query: q, order: new Map(r.hits.map((h, i) => [h.id, i])), provider: r.provider, semantic: r.semantic };
+    if (!r.hits.length) toast('Nothing in the vector index yet — it is still building, or the library is empty.');
+  } catch (e) { toast(e.message, true); }
+  render();
+}
 
 /* ---------- chrome ---------- */
 
@@ -136,7 +170,7 @@ function railSection(title, field) {
         render();
       },
     }, [
-      el('span', { text: field === 'imagery_dep' ? (DEP_LABEL[v] || v) : String(v) }),
+      el('span', { text: chipLabel(field, v) }),
       el('span', { class: 'n', text: String(n) }),
     ]))),
   ]);
@@ -144,19 +178,23 @@ function railSection(title, field) {
 
 function rail() {
   const activeTerms = [...S.filters.term];
-  const anyFilter = activeTerms.length || S.search || FILTER_FIELDS.some(([f]) => S.filters[f].size);
+  const anyFilter = activeTerms.length || S.search || S.semantic || FILTER_FIELDS.some(([f]) => S.filters[f].size);
   return el('div', { class: 'rail' }, [
     el('section', {}, [
       el('h3', { text: 'Search' }),
       el('input', {
-        type: 'search', placeholder: 'title, source, term…', value: S.search,
-        oninput: (e) => { S.search = e.target.value; renderContent(); },
+        type: 'search', placeholder: 'type to filter · Enter to search by meaning', value: S.search,
+        title: 'Typing filters by title, source and term. Enter asks the vector database: "dark footer with a giant wordmark", "3D render of a phone on stone".',
+        oninput: (e) => { S.search = e.target.value; if (S.semantic) { S.semantic = null; } renderContent(); },
+        onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); semanticSearch(e.target.value); } },
       }),
+      S.semantic ? el('div', { class: 'hint info', text: `Ranked by ${S.semantic.semantic ? 'meaning' : 'keywords'} (${S.semantic.provider}) for “${S.semantic.query}”.` }) : null,
       anyFilter ? el('button', {
         class: 'clear', text: 'Clear all filters',
         onclick: () => {
           for (const k of Object.keys(S.filters)) S.filters[k].clear();
           S.search = '';
+          S.semantic = null;
           render();
         },
       }) : null,
@@ -181,7 +219,7 @@ function card(r) {
     el('div', { class: 'shot' }, [r.image ? shotImg('/img/' + r.image, r.title) : null]),
     el('div', { class: 'meta' }, [
       el('div', { class: 't', text: r.title || r.id }),
-      el('div', { class: 'sub', text: [r.id, r.archetype[0] || ''].filter(Boolean).join(' · ') }),
+      el('div', { class: 'sub', text: [r.id, r.concept === 'component' && r.component_type ? natureLabel('component_type', r.component_type) : natureLabel('concept', r.concept), r.medium && r.medium !== 'flat-ui' ? natureLabel('medium', r.medium) : ''].filter((x) => x && x !== '—').join(' · ') }),
       el('div', { class: 'badges' }, [
         r.verdict ? el('span', { class: 'badge ' + r.verdict, text: r.verdict }) : null,
         r.kind === 'concept' ? el('span', { class: 'badge concept', text: 'concept' }) : null,
@@ -218,10 +256,70 @@ async function select(id) {
   S.selected = id;
   S.detail = null;
   render();
+  S.similar = null;
   try {
     S.detail = await api('/api/ref/' + encodeURIComponent(id));
   } catch (e) { toast(e.message, true); }
   render();
+  loadSimilar(id);
+}
+
+/** Nearest references in the vector database — by the picture when the embedder can see. */
+async function loadSimilar(id) {
+  try {
+    const r = await api('/api/similar/' + encodeURIComponent(id));
+    if (S.selected === id) { S.similar = r; render(); }
+  } catch { if (S.selected === id) { S.similar = { id, hits: [], note: 'vector index unavailable' }; render(); } }
+}
+
+/**
+ * Change a nature field. A changed classification is marked `corrected` — the most valuable
+ * row in the database, because it is what the next analysis takes as precedent.
+ */
+async function setNature(id, field, value) {
+  const body = { [field]: value, status: 'corrected' };
+  if (field === 'concept' && value !== 'component') body.component_type = '';
+  try {
+    await api('/api/ref/' + encodeURIComponent(id), {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+    });
+    await loadRefs();
+    S.detail = await api('/api/ref/' + encodeURIComponent(id));
+    toast('Saved as a correction — future analyses will follow it.');
+    render();
+  } catch (e) { toast(e.message, true); }
+}
+
+function natureEditor(d) {
+  const n = S.nature;
+  if (!n) return null;
+  const sel = (field, options, value, disabled) => el('select', {
+    disabled, 'aria-label': field,
+    onchange: (e) => setNature(d.id, field, e.target.value),
+  }, options.map(([v, label]) => el('option', { value: v, selected: v === (value || ''), text: label })));
+  const isComp = d.concept === 'component';
+  return el('div', { class: 'nature' }, [
+    el('label', {}, [el('span', { text: 'What it is' }), sel('concept', n.concepts.map((c) => [c.id, c.name]), d.concept)]),
+    el('label', {}, [el('span', { text: 'Component type' }), sel('component_type',
+      [['', isComp ? '— choose —' : 'n/a — not a component'], ...n.componentTypes.map((t) => [t.id, t.name])], d.component_type, !isComp)]),
+    el('label', {}, [el('span', { text: 'Made as' }), sel('medium', [['', '—'], ...n.media.map((m) => [m.id, m.name])], d.medium)]),
+    el('label', {}, [el('span', { text: 'Designed for' }), sel('platform', [['', '—'], ...n.platforms.map((p) => [p, p])], d.platform)]),
+  ]);
+}
+
+function similarBlock(d) {
+  const r = S.similar;
+  if (!r || r.id !== d.id) return el('div', { class: 'note', text: 'Asking the vector database…' });
+  if (!r.hits.length) return el('div', { class: 'note', text: r.note || 'Nothing similar yet.' });
+  return el('div', {}, [
+    el('div', { class: 'hint', text: r.space === 'image' ? 'By the picture itself (image embeddings).' : 'By the analysis text — add a Voyage key to compare the pictures.' }),
+    el('div', { class: 'lookalikes' }, r.hits.slice(0, 9).map((h) => el('button', {
+      class: 'lookalike', title: `${h.id} · ${h.payload.title} · ${h.score.toFixed(3)}`, onclick: () => select(h.id),
+    }, [
+      h.payload.image ? shotImg('/img/' + h.payload.image, h.payload.title) : el('div', { class: 'shot-missing', text: h.id }),
+      el('span', { class: 'score', text: h.score.toFixed(2) }),
+    ]))),
+  ]);
 }
 
 async function react(id, value) {
@@ -272,6 +370,10 @@ function detailPanel() {
     el('div', { class: 'src', text: [d.id, d.source, d.kind].filter(Boolean).join(' · ') }),
     d.image ? shotImg('/img/' + d.image, d.title, 'shot-full') : null,
 
+    el('h4', { text: 'Nature' }),
+    natureEditor(d),
+    d.nature ? el('div', { class: 'note', text: d.nature.replace(/\*([^*\n]+)\*/g, '$1') }) : el('div', { class: 'hint', text: 'No nature analysis written for this record yet.' }),
+
     el('h4', { text: 'My reaction' }),
     el('div', { class: 'react' }, [
       el('button', { 'aria-pressed': String(r.sam_reaction === 'like'), text: 'Like', onclick: () => react(d.id, 'like') }),
@@ -292,6 +394,7 @@ function detailPanel() {
       el('dt', { text: 'cost' }), el('dd', { text: d.cost || '—' }),
       el('dt', { text: 'confidence' }), el('dd', { text: d.confidence || '—' }),
       el('dt', { text: 'status' }), el('dd', { text: d.status || '—' }),
+      d.analysed_by ? el('dt', { text: 'analysed by' }) : null, d.analysed_by ? el('dd', { text: d.analysed_by }) : null,
     ]),
 
     d.archetypeDetail && d.archetypeDetail.length ? el('h4', { text: 'Archetype' }) : null,
@@ -300,7 +403,10 @@ function detailPanel() {
     el('h4', { text: `Facet terms (${(d.facetDetail || []).length})` }),
     el('div', { class: 'terms' }, (d.facetDetail || []).map(termRow)),
 
-    el('h4', { text: 'Nearest in the library' }),
+    el('h4', { text: 'Looks like' }),
+    similarBlock(d),
+
+    el('h4', { text: 'Shares terms with' }),
     (d.neighbours || []).length
       ? el('div', { class: 'nb' }, d.neighbours.map((n) => el('button', { onclick: () => select(n.id) }, [
         el('span', { class: 'score', text: n.score.toFixed(2) }),
@@ -313,6 +419,10 @@ function detailPanel() {
 
     d.read ? el('h4', { text: 'Read' }) : null,
     d.read ? el('div', { class: 'note', text: d.read }) : null,
+    d.reuse ? el('h4', { text: 'How to reuse it' }) : null,
+    d.reuse ? el('div', { class: 'note', text: d.reuse }) : null,
+    d.why ? el('h4', { text: 'Why the verdict' }) : null,
+    d.why ? el('div', { class: 'note', text: d.why }) : null,
     el('h4', { text: 'File' }),
     el('code', { class: 'path', text: d.file }),
   ]);
@@ -851,6 +961,7 @@ async function candidatesView() {
 const kb = (n) => (n > 1024 * 1024 ? (n / 1024 / 1024).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB');
 
 let MODELS = null;
+let LOCAL = null;
 const modelChoice = () => {
   try { return localStorage.getItem('design.model') || ''; } catch { return ''; }
 };
@@ -862,7 +973,10 @@ function inboxView() {
   const paint = (data, status) => {
     const running = status && status.running;
     const n = data.count;
-    const chosen = ((MODELS || []).some((m) => m.id === modelChoice()) ? modelChoice() : null) || (MODELS || []).find((m) => m.default)?.id || '';
+    const usable = (MODELS || []).filter((m) => m.available);
+    const chosen = (usable.some((m) => m.id === modelChoice()) ? modelChoice() : null) || (MODELS || []).find((m) => m.default)?.id || '';
+    const chosenModel = (MODELS || []).find((m) => m.id === chosen);
+    const isHark = chosen === 'hark';
 
     const header = el('div', { class: 'inbox-head' }, [
       el('div', {}, [
@@ -908,13 +1022,19 @@ function inboxView() {
         el('select', {
           disabled: running,
           onchange: (e) => { setModelChoice(e.target.value); refreshInbox(); },
-        }, (MODELS || []).map((m) => el('option', {
-          value: m.id, selected: m.id === chosen, text: `${m.name} — ${m.note}`,
-        }))),
+        }, [...new Set((MODELS || []).map((m) => m.group))].map((g) => el('optgroup', { label: g },
+          (MODELS || []).filter((m) => m.group === g).map((m) => el('option', {
+            value: m.id, selected: m.id === chosen, disabled: !m.available,
+            text: `${m.name} — ${m.available ? m.note : m.why}`,
+          }))))),
       ]),
+      running ? el('button', {
+        class: 'clear', text: status.stopping ? 'Stopping after this image…' : 'Stop', disabled: !!status.stopping,
+        onclick: async () => { await api('/api/ingest/stop', { method: 'POST' }).catch(() => {}); refreshInbox(); },
+      }) : null,
       el('button', {
         class: 'primary',
-        text: running ? 'Analysing…' : n ? `Analyse ${n} image${n === 1 ? '' : 's'}` : 'Nothing to analyse',
+        text: running ? `Analysing ${Math.min((status.done || 0) + 1, status.count)} of ${status.count}…` : n ? `Analyse ${n} image${n === 1 ? '' : 's'}` : 'Nothing to analyse',
         disabled: running || !n,
         onclick: async () => {
           try {
@@ -924,7 +1044,7 @@ function inboxView() {
             });
             if (!out.ok) { toast(out.error, true); return; }
             if (out.queued) { toast(`Sent ${out.count} image${out.count === 1 ? '' : 's'} to Hark. Message Hark "analyze" in your chat.`); refreshInbox(); return; }
-            toast(`Analysing ${out.count} image${out.count === 1 ? '' : 's'} — this takes a few minutes.`);
+            toast(`Analysing ${out.count} image${out.count === 1 ? '' : 's'} with ${chosenModel ? chosenModel.name : chosen}.`);
             pollIngest();
             refreshInbox();
           } catch (e) { toast(e.message, true); }
@@ -932,10 +1052,29 @@ function inboxView() {
       }),
     ]);
 
-    const explain = el('p', { class: 'inbox-foot' }, [
-      'Hark reads each image with the ', el('code', { class: 'path', text: 'design-ingest' }),
-      ' rules: concept first, measured colour and contrast, and a record left in the Queue for you to react to. ',
-      'After pressing Analyse, message Hark "analyze" in your chat to start the run.',
+    const v = S.vectors;
+    const explain = el('div', { class: 'inbox-foot' }, [
+      el('p', {}, isHark ? [
+        'Hark reads each image with the ', el('code', { class: 'path', text: 'design-ingest' }),
+        ' rules. After pressing Analyse, message Hark "analyze" in your chat to start the run.',
+      ] : [
+        'Each image is read nature first — full design, 3D-drafted mockup, or component and which one — then measured: ',
+        'palette and contrast come off the pixels, not the model. The most similar references already in the library are shown to the model as precedent, ',
+        'and every record lands in the Queue for you to react to or correct.',
+      ]),
+      LOCAL && !LOCAL.reachable ? el('p', { class: 'hint' }, ['No local model server at ', el('code', { class: 'path', text: LOCAL.url }),
+        '. Start Ollama and pull a vision model (for example ', el('code', { class: 'path', text: 'ollama pull qwen2.5vl:7b' }), ') to analyse for free on this machine.']) : null,
+      v ? el('p', { class: 'hint' }, [
+        `Vector index: ${v.indexed} of ${v.refs} references · ${v.backend} store · `,
+        v.embedder ? v.embedder.label : (v.embedderError || 'no embedder'),
+        v.syncing ? ' · updating…' : '',
+        v.error ? ` · last sync failed: ${v.error}` : '',
+        ' ', el('button', { class: 'clear', text: 'Rebuild', onclick: async () => {
+          await api('/api/vectors/sync', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ rebuild: true }) });
+          toast('Rebuilding the vector index in the background.');
+          setTimeout(refreshInbox, 1500);
+        } }),
+      ]) : null,
     ]);
 
     // replaceChildren() stringifies a null argument into the text "null", so filter first.
@@ -947,8 +1086,8 @@ function inboxView() {
       status && status.code !== null && status.code !== undefined && !running
         ? el('div', { class: 'hint ' + (status.code === 0 ? 'info' : 'warn') },
           [status.code === 0
-            ? (status.queued ? `Queued for Hark. Message Hark "analyze" in your chat; results land in the Queue tab.` : `Last run finished${status.model ? ' on ' + status.model : ''}. Check the Queue tab.`)
-            : (status.hint || `Last run failed (exit ${status.code}). Run /design-ingest inside a Claude Code session instead.`)])
+            ? (status.queued ? `Queued for Hark. Message Hark "analyze" in your chat; results land in the Queue tab.` : `Last run finished${status.model ? ' on ' + status.model : ''}: ${(status.written || []).length} written${status.hint ? ' — ' + status.hint : ''}. Check the Queue tab.`)
+            : (status.hint || `Last run failed (exit ${status.code}).`)])
         : null,
       status && status.log
         ? el('details', { class: 'run-log' }, [
@@ -961,8 +1100,10 @@ function inboxView() {
 
   const refreshInbox = async () => {
     try {
-      if (!MODELS) MODELS = (await api('/api/models')).models;
-      const [data, status] = await Promise.all([api('/api/inbox'), api('/api/ingest/status')]);
+      const m = await api('/api/models');
+      MODELS = m.models; LOCAL = m.local;
+      const [data, status, vec] = await Promise.all([api('/api/inbox'), api('/api/ingest/status'), api('/api/vectors').catch(() => null)]);
+      S.vectors = vec;
       paint(data, status);
       await loadOverview();
       renderStats();
@@ -978,6 +1119,7 @@ function pollIngest() {
   pollTimer = setInterval(async () => {
     try {
       const s = await api('/api/ingest/status');
+      if (s.running && S.view === 'inbox') render();
       if (!s.running) {
         clearInterval(pollTimer);
         await loadAll();
@@ -1018,7 +1160,10 @@ function render() {
 
 /* ---------- data ---------- */
 
-async function loadOverview() { S.overview = await api('/api/overview'); }
+async function loadOverview() {
+  S.overview = await api('/api/overview');
+  if (!S.nature) S.nature = await api('/api/nature').catch(() => null);
+}
 async function loadRefs() { S.refs = (await api('/api/refs')).refs; }
 async function loadAll() {
   try { await Promise.all([loadOverview(), loadRefs()]); }

@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+medium: 3d-render
+platform: mobile
 ---
 
 # REF-0086 — Phone mockup on terrazzo — NewCode process page, oversized cream caps overlapped by glossy orange-red 3D forms
+
+## Nature
+
+Phone lying on terrazzo; rendered set.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

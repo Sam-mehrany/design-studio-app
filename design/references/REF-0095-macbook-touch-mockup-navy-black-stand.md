@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0095 — Laptop on black desk brackets against navy gradient — periwinkle gradient screen with thin centred caps title (mockup PSD)
+
+## Nature
+
+Laptop on desk brackets against a navy gradient; rendered.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

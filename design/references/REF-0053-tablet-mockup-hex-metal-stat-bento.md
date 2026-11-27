@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:30 PM EST (UTC-05:00)
+medium: 3d-render
+platform: tablet
 ---
 
 # REF-0053 — Tablet mockup on perforated hex metal, grey landing with 79% stat bento
+
+## Nature
+
+Tablet on perforated hex metal; rendered.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

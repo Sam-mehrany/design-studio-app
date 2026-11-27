@@ -4,7 +4,7 @@ id: REF-0043
 title: "Sign-up card: grainy black panel with orange fluted-glass glow"
 source: "Pinterest board 'login-page-design' (mehrani0146)"
 kind: concept
-concept: web
+concept: component
 captured: 2026-11-26
 image: library/REF-0043.jpg
 archetype: [J.ON.signup]
@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:30 PM EST (UTC-05:00)
+component_type: I.TYPE.auth-form
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0043 — Sign-up card: grainy black panel with orange fluted-glass glow
+
+## Nature
+
+Sign-up card with a grain panel.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0099 — Low-angle laptop in a white glass-block studio — dark SME investment landing, white bold headline, blue CTA, B/W architecture photo (Silicon.V)
+
+## Nature
+
+Low-angle laptop in a white glass-block studio; rendered.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

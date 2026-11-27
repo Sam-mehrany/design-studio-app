@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:12 PM EST (UTC-05:00)
+medium: photo
+platform: tablet
 ---
 
 # REF-0030 — Neutral sales dashboard on a tablet held in hands
+
+## Nature
+
+Tablet held in real hands, natural skin and light falloff → photographed mockup; the UI is laid out for tablet.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

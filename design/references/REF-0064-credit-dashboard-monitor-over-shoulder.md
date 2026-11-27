@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:40 PM EST (UTC-05:00)
+medium: photo
+platform: desktop
 ---
 
 # REF-0064 — Over-the-shoulder monitor mockup — credit-score dashboard, bento cards over blurred colour blob, dark lower half
+
+## Nature
+
+Over-the-shoulder monitor with a person in frame → photographed.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

@@ -45,7 +45,9 @@ function copyTree(from, to) {
 
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
-for (const f of ['lib.js', 'studio.js', 'auth.js']) fs.copyFileSync(path.join(SRC, f), path.join(OUT, f));
+// Every server module: the studio, the shared parser, auth, and the analyser / vector stack.
+const MODULES = ['lib.js', 'studio.js', 'auth.js', 'config.js', 'image.js', 'local-llm.js', 'embed.js', 'vectordb.js', 'vindex.js', 'analyse.js'];
+for (const f of MODULES) fs.copyFileSync(path.join(SRC, f), path.join(OUT, f));
 copyTree(path.join(SRC, 'ui'), path.join(OUT, 'ui'));
 
 const files = fs.readdirSync(OUT).length + fs.readdirSync(path.join(OUT, 'ui')).length;

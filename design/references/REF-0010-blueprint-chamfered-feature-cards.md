@@ -4,7 +4,7 @@ id: REF-0010
 title: "Landing feature row: chamfered cream and orange cards with line diagrams"
 source: "Pinterest board 'component-design-idea' (mehrani0146)"
 kind: concept
-concept: web
+concept: component
 captured: 2026-11-26
 image: library/REF-0010.jpg
 archetype: [J.ACQ.feature]
@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:45 PM EST (UTC-05:00)
+component_type: I.TYPE.feature-section
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0010 — Landing feature row — chamfered cream and orange cards with line diagrams
+
+## Nature
+
+A row of feature cards under a heading, cropped from a longer landing → feature section.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

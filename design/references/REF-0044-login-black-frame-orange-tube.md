@@ -4,7 +4,7 @@ id: REF-0044
 title: "Log-in: two light panels in a black frame, orange 3D tube render"
 source: "Pinterest board 'login-page-design' (mehrani0146)"
 kind: concept
-concept: web
+concept: component
 captured: 2026-11-26
 image: library/REF-0044.jpg
 archetype: [J.ON.signup]
@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:30 PM EST (UTC-05:00)
+component_type: I.TYPE.auth-form
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0044 — Log-in: two light panels in a black frame, orange 3D tube render
+
+## Nature
+
+Log-in panels inside a black frame.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

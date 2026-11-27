@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:40 PM EST (UTC-05:00)
+medium: 3d-render
+platform: tablet
 ---
 
 # REF-0065 — iPad-on-stand mockup — light landing with italic serif headline, orange single accent, isometric block diagram
+
+## Nature
+
+iPad on a stand beside a plant leaf; rendered.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

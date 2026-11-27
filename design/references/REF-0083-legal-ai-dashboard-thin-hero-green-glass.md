@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0083 — Legal AI dashboard concept — thin oversized greeting, deep-green glass render, gantt timeline, assistant panel (FlowFunds)
+
+## Nature
+
+A whole dashboard, flat.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

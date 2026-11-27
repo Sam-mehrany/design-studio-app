@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:12 PM EST (UTC-05:00)
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0034 — Usage detail: monospace hero numerals, segmented meter, dithered photo frame
+
+## Nature
+
+A whole usage-detail screen, flat.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

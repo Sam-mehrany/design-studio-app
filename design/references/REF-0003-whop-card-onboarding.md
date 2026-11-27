@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:45 PM EST (UTC-05:00)
+component_type: I.TYPE.onboarding-step
+medium: flat-ui
+platform: none
 ---
 
 # REF-0003 — Whop Card onboarding step — glowing orange card on near-black
+
+## Nature
+
+A single onboarding step built around one glowing card; one ask, nothing around it.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

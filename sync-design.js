@@ -8,6 +8,10 @@
  *
  *   node sync-design.js            copy the vault into design/
  *   node sync-design.js --check    report what would change, write nothing
+ *   node sync-design.js --to-vault the other direction, for CODE ONLY: install this repo's tools/,
+ *                                  nature.md and the record template into the vault, and add the
+ *                                  I.TYPE table to its facet I if missing. Never touches a record,
+ *                                  a preference, a decision or a stance. Combine with --check.
  *
  * Override the source with DESIGN_VAULT.
  */
@@ -42,7 +46,7 @@ if (path.resolve(SRC) === path.resolve(OUT)) {
 }
 
 // Generated or machine-local; never worth committing.
-const SKIP_DIRS = new Set(['node_modules', '.git', 'inbox']);
+const SKIP_DIRS = new Set(['node_modules', '.git', 'inbox', '.vectors']);
 const SKIP_FILES = new Set(['.DS_Store', 'Thumbs.db']);
 
 if (!fs.existsSync(path.join(SRC, '00-model.md'))) {
@@ -51,6 +55,47 @@ if (!fs.existsSync(path.join(SRC, '00-model.md'))) {
 }
 
 let copied = 0, skipped = 0, bytes = 0;
+
+/**
+ * Repo → vault, code and vocabulary only. The vault is the live library: its records carry
+ * reactions and corrections this snapshot may not have, so they are never overwritten here.
+ * Facet I is patched (the I.TYPE section inserted) rather than replaced, so a stance recorded
+ * in the vault's copy survives.
+ */
+if (process.argv.includes('--to-vault')) {
+  const put = (rel) => {
+    const s = path.join(OUT, rel), d = path.join(SRC, rel);
+    const same = fs.existsSync(d) && fs.readFileSync(d).equals(fs.readFileSync(s));
+    if (same) return;
+    console.log(`  ${fs.existsSync(d) ? 'update' : 'add   '} ${rel}`);
+    if (!CHECK) { fs.mkdirSync(path.dirname(d), { recursive: true }); fs.copyFileSync(s, d); }
+    copied++;
+  };
+  const tree = (rel) => {
+    for (const e of fs.readdirSync(path.join(OUT, rel), { withFileTypes: true })) {
+      if (SKIP_DIRS.has(e.name) || SKIP_FILES.has(e.name)) continue;
+      const r = path.join(rel, e.name);
+      if (e.isDirectory()) tree(r); else put(r);
+    }
+  };
+  tree('tools');
+  put('nature.md');
+  put(path.join('references', '_template.md'));
+  const facetI = fs.readdirSync(path.join(SRC, 'facets')).find((f) => f.startsWith('I-'));
+  const vaultI = path.join(SRC, 'facets', facetI);
+  const text = fs.readFileSync(vaultI, 'utf8');
+  if (!/^## I\.TYPE\b/m.test(text)) {
+    const repoI = fs.readFileSync(path.join(OUT, 'facets', facetI), 'utf8');
+    const block = repoI.slice(repoI.search(/^## I\.TYPE\b/m), repoI.search(/^## I\.STATE\b/m));
+    const at = text.search(/^## I\.STATE\b/m);
+    console.log(`  patch  facets/${facetI} (insert the I.TYPE component-type table)`);
+    if (!CHECK) fs.writeFileSync(vaultI, at === -1 ? text + '\n' + block : text.slice(0, at) + block + text.slice(at), 'utf8');
+    copied++;
+  }
+  console.log(`sync-design: ${CHECK ? 'would install' : 'installed'} ${copied} change(s) into ${SRC}`);
+  if (!CHECK && copied) console.log('Next, in the vault: node tools/backfill-nature.js   (fills the nature fields of REF-0001..0101)');
+  process.exit(0);
+}
 
 function walk(from, to) {
   fs.mkdirSync(to, { recursive: true });

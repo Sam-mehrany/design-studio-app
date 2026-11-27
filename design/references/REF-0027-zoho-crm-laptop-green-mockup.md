@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:12 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0027 — CRM concept on a laptop against a green backdrop
+
+## Nature
+
+Laptop tilted against a flat green backdrop, clean CG light → rendered mockup.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

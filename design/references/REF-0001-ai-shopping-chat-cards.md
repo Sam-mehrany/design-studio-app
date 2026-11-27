@@ -19,9 +19,18 @@ sam_reaction:
 sam_note: "typo-graphy style, minimal design, modern design"
 tags: [design/ref]
 modified: Thu 2026-11-26 1:45 PM EST (UTC-05:00)
+component_type: I.TYPE.chat
+medium: flat-ui
+platform: mobile
 ---
 
 # REF-0001 — AI shopping-assistant answer cards over a product photo
+
+## Nature
+
+Stacked AI-assistant answer cards laid over a product photo; no screen chrome around them → a chat/answer component, phone-width.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

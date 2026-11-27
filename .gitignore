@@ -6,3 +6,6 @@ dist/
 #   build/icon.*  drawn by make-icon.js
 server/
 build/
+
+# Derived from the records by design/tools/vindex.js; rebuild with `node design/tools/vindex.js`.
+design/.vectors/

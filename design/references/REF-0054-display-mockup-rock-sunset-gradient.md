@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:30 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0054 — Studio display on a rock against a teal-to-orange gradient sky, abstract wallpaper
+
+## Nature
+
+Studio display on a rock against a gradient sky; rendered set, wallpaper on screen.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

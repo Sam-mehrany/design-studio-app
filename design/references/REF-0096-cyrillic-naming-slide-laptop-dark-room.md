@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0096 — Low-angle laptop in a dark room with window light — sepia leaf-photo slide, upright + italic serif headline (Cyrillic)
+
+## Nature
+
+Low-angle laptop in a dark room with window light; rendered.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

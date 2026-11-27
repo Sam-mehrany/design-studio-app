@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:30 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0051 — Laptop mockup in a dark case-study layout, data slide with big percentage numerals
+
+## Nature
+
+Laptop in a dark rendered set inside a case-study layout.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

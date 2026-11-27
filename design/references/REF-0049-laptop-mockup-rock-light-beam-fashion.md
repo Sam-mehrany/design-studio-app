@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:30 PM EST (UTC-05:00)
+medium: 3d-render
+platform: desktop
 ---
 
 # REF-0049 — Laptop mockup on porous rock under a light beam, beige fashion-editorial site
+
+## Nature
+
+Laptop on porous rock under a light beam — classic rendered mockup set.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

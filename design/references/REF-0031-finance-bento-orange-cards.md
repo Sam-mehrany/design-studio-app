@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:12 PM EST (UTC-05:00)
+medium: flat-ui
+platform: desktop
 ---
 
 # REF-0031 — Finance dashboard cards: orange accent, black pill CTA, dark goals card
+
+## Nature
+
+Dashboard cards shown as a screen, flat.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

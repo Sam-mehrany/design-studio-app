@@ -19,9 +19,18 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:45 PM EST (UTC-05:00)
+component_type: I.TYPE.card
+medium: 3d-render
+platform: none
 ---
 
 # REF-0020 — 'Card UI Concept' post — three fanned frosted cards with amber glow
+
+## Nature
+
+Three frosted cards fanned in perspective with a lit glow — a card concept staged in 3D, not a screen.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 

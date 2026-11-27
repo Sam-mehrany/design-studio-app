@@ -19,9 +19,17 @@ sam_reaction:
 sam_note:
 tags: [design/ref]
 modified: Fri 2026-11-27 12:45 PM EST (UTC-05:00)
+medium: flat-ui
+platform: mobile
 ---
 
 # REF-0097 — Mobile building-plan screen — isometric 3D floor plan render, frosted progress card with thin 67%, dark bottom sheet (RON Design)
+
+## Nature
+
+A whole phone screen, flat, with a 3D floor plan inside the UI.
+
+*Nature backfilled by Hark, 27 Nov 2026, from the image.*
 
 ## Read
 
