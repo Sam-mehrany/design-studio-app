@@ -14,10 +14,11 @@ rtl: risky
 cost: med
 verdict: adapt
 confidence: med
-status: unreviewed
+status: reviewed
 sam_note:
 tags: [design/ref]
 modified: Thu 2026-11-26 1:12 PM EST (UTC-05:00)
+sam_reaction: like
 ---
 
 # REF-0021 — Folder-tab card with mesh-gradient insert, heavy black frame
