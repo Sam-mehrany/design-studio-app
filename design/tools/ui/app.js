@@ -33,6 +33,8 @@ const ICONS = {
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M2.5 12h2M19.5 12h2M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
   menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
   chevron: '<path d="M9.5 6l6 6-6 6"/>',
+  chevronL: '<path d="M14.5 6l-6 6 6 6"/>',
+  back: '<path d="M19 12H5.5M11 6l-6 6 6 6"/>',
   close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
   arrow: '<path d="M7 17L17 7M8.5 7H17v8.5"/>',
   logout: '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M9.5 16.5L5 12l4.5-4.5M5 12h10"/>',
@@ -109,12 +111,26 @@ const thumb = (r, cls = '') => el('div', { class: 'thumb ' + cls }, [r && r.imag
 
 /* ---------- state ---------- */
 
-const VIEWS = { overview: 'Overview', gallery: 'Gallery', graph: 'Graph', queue: 'Queue', candidates: 'Candidates', inbox: 'Inbox' };
+const VIEWS = { overview: 'Overview', gallery: 'Gallery', graph: 'Graph', queue: 'Queue', candidates: 'Candidates', inbox: 'Inbox', ref: 'Reference' };
+
+/** #gallery -> {view:'gallery'}; #ref/REF-0032 -> {view:'ref', id:'REF-0032'}; anything else -> overview. */
+function parseHash() {
+  let h = location.hash.slice(1);
+  try { h = decodeURIComponent(h); } catch { /* keep raw */ }
+  const m = h.match(/^ref\/(.+)$/);
+  if (m) return { view: 'ref', id: m[1] };
+  return { view: VIEWS[h] && h !== 'ref' ? h : 'overview' };
+}
+const START = parseHash();
+
 const S = {
-  view: VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : 'overview',
+  view: START.view,
+  refId: START.id || null,     // the reference the ref page shows
+  lastRef: null,               // highlighted in the gallery after coming back from a page
+  galleryScroll: 0,
+  restoreGallery: false,
   overview: null,
   refs: [],
-  selected: null,
   detail: null,
   filters: { concept: new Set(), archetype: new Set(), verdict: new Set(), kind: new Set(), imagery_dep: new Set(), rtl: new Set(), cost: new Set(), status: new Set(), reaction: new Set(), term: new Set() },
   search: '',
@@ -190,15 +206,20 @@ function renderChrome() {
   const tail = root.split(/[/\\]/).filter(Boolean).slice(-2).join('/');
   $('#root').textContent = tail ? '…/' + tail : '—';
   $('#root').title = root;
-  $('#crumb').textContent = VIEWS[S.view];
-  for (const b of document.querySelectorAll('#nav button')) b.setAttribute('aria-current', String(b.dataset.view === S.view));
+  const crumbs = S.view === 'ref'
+    ? [el('button', { class: 'crumb-link', onclick: backToGallery, text: 'Gallery' }), el('span', { class: 'sep' }, [icon('chevron')]), el('b', { text: S.refId })]
+    : [el('b', { text: VIEWS[S.view] })];
+  $('.crumbs').replaceChildren(el('span', { class: 'root', text: 'Studio' }), el('span', { class: 'sep' }, [icon('chevron')]), ...crumbs);
+  const navView = S.view === 'ref' ? 'gallery' : S.view;
+  for (const b of document.querySelectorAll('#nav button')) b.setAttribute('aria-current', String(b.dataset.view === navView));
+  document.title = S.view === 'ref' ? `${S.refId} · Design Studio` : `${VIEWS[S.view]} · Design Studio`;
 }
 
-function setView(v) {
+function setView(v, fromHistory) {
   S.view = v;
   S.railOpen = false;
   document.body.classList.remove('nav-open');
-  try { history.replaceState(null, '', '#' + v); } catch { /* sandboxed viewers */ }
+  if (!fromHistory) pushHash('#' + v);
   render();                       // paint immediately so the section feels instant
   // The library changes on disk underneath us — a record written since page load would
   // otherwise show in Graph (which fetches per open) but not in Gallery (which read the
@@ -208,14 +229,11 @@ function setView(v) {
 }
 
 function syncOverlay() {
-  const panelOverlay = S.view === 'gallery' && S.selected && window.innerWidth <= 1280;
-  const railOverlay = S.view === 'gallery' && S.railOpen && window.innerWidth <= 1020;
-  document.body.classList.toggle('overlay', !!(panelOverlay || railOverlay));
+  document.body.classList.toggle('overlay', S.view === 'gallery' && S.railOpen && window.innerWidth <= 1020);
 }
 function closeOverlays() {
   document.body.classList.remove('nav-open');
-  if (S.railOpen) { S.railOpen = false; render(); return; }
-  if (S.selected && window.innerWidth <= 1280) { S.selected = null; S.detail = null; render(); }
+  if (S.railOpen) { S.railOpen = false; render(); }
 }
 
 /* ---------- overview ---------- */
@@ -436,11 +454,12 @@ function rail() {
   ]);
 }
 
-function card(r) {
+function card(r, extra) {
   return el('article', {
-    class: 'card', 'aria-selected': String(S.selected === r.id), tabindex: '0',
-    onclick: () => select(r.id),
-    onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(r.id); } },
+    class: 'card', 'data-id': r.id, 'aria-current': S.lastRef === r.id ? 'true' : null, tabindex: '0',
+    title: `Open ${r.id}`,
+    onclick: () => openRef(r.id),
+    onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRef(r.id); } },
   }, [
     el('div', { class: 'shot' }, [r.image ? shotImg('/img/' + r.image, r.title) : el('div', { class: 'shot-missing', text: 'No image' })]),
     el('div', { class: 'meta' }, [
@@ -452,6 +471,7 @@ function card(r) {
         r.sam_reaction === 'like' ? el('span', { class: 'pill like' }, [icon('heart'), 'liked']) : null,
         r.sam_reaction === 'dislike' ? el('span', { class: 'pill dislike', text: 'not for me' }) : null,
         r.kind && r.kind !== 'concept' ? el('span', { class: 'pill vio', text: r.kind }) : null,
+        extra || null,
       ]),
     ]),
   ]);
@@ -485,29 +505,61 @@ function galleryMain() {
       el('button', { class: 'btn', onclick: () => { clearFilters(); render(); } }, ['Clear filters']),
     ]);
   } else {
-    body = el('div', { class: 'grid' }, list.map(card));
+    body = el('div', { class: 'grid' }, list.map((r) => card(r)));
   }
   return el('div', { class: 'gal-main' }, [head, body]);
 }
 
-/* ---------- detail ---------- */
+/* ---------- reference page: one addressable page per reference (#ref/REF-0032) ---------- */
 
-function openRef(id) {
-  S.view = 'gallery';
-  S.selected = null;
-  select(id);
-  try { history.replaceState(null, '', '#gallery'); } catch { /* ignore */ }
+const refHash = (id) => '#ref/' + encodeURIComponent(id);
+
+/** Push a history entry unless we are already there, so Back and Forward walk the app. */
+function pushHash(h) {
+  if (location.hash === h) return;
+  try { history.pushState(null, '', h); } catch { /* sandboxed viewers: no history */ }
 }
 
-async function select(id) {
-  if (S.selected === id) { S.selected = null; S.detail = null; render(); return; }
-  S.selected = id;
-  S.detail = null;
+function openRef(id, replace) {
+  if (S.view === 'gallery') { const g = $('#main .gal-main'); S.galleryScroll = g ? g.scrollTop : 0; }
+  S.view = 'ref';
+  S.refId = id;
+  S.lastRef = id;
+  if (!S.detail || S.detail.id !== id) S.detail = null;
+  S.railOpen = false;
+  document.body.classList.remove('nav-open');
+  if (replace) { try { history.replaceState(null, '', refHash(id)); } catch { /* ignore */ } } else pushHash(refHash(id));
   render();
+  if (!S.detail) loadDetail(id);
+}
+
+async function loadDetail(id) {
   try {
-    S.detail = await api('/api/ref/' + encodeURIComponent(id));
-  } catch (e) { toast(e.message, true); }
-  if (S.selected === id) render();
+    const d = await api('/api/ref/' + encodeURIComponent(id));
+    if (S.refId !== id) return;
+    S.detail = d;
+  } catch (e) {
+    if (S.refId !== id) return;
+    S.detail = { id, error: e.message };
+  }
+  if (S.view === 'ref') render();
+}
+
+function backToGallery() {
+  S.restoreGallery = true;
+  setView('gallery');
+}
+
+/** The order prev/next walks: the gallery's current filter when this ref is in it, else the library. */
+function refOrder(id) {
+  const f = filtered();
+  return f.some((r) => r.id === id) ? f : S.refs;
+}
+function stepRef(dir) {
+  const order = refOrder(S.refId);
+  const i = order.findIndex((r) => r.id === S.refId);
+  const next = order[i + dir];
+  if (i >= 0 && next) openRef(next.id, true);
 }
 
 async function react(id, value) {
@@ -520,7 +572,7 @@ async function react(id, value) {
       body: JSON.stringify({ sam_reaction: next, status: next ? 'reviewed' : 'unreviewed' }),
     });
     await loadAll();
-    if (S.detail && S.detail.id === id) S.detail.sam_reaction = next;
+    if (S.detail && S.detail.id === id) { S.detail.sam_reaction = next; S.detail.status = next ? 'reviewed' : 'unreviewed'; }
     render();
   } catch (e) { toast(e.message, true); }
 }
@@ -546,8 +598,8 @@ function reactionSeg(r) {
 
 function termRow(t) {
   return el('button', {
-    class: 'term', title: t.definition || '',
-    onclick: () => { S.filters.term.add(t.id); S.selected = null; S.detail = null; setView('gallery'); },
+    class: 'term', title: t.definition ? `${t.definition} — show every reference with this term` : 'Show every reference with this term',
+    onclick: () => showIn('term', t.id),
   }, [
     el('code', { text: t.id }),
     el('span', { class: 'nm', text: t.name || (t.valid ? '' : 'unknown term') }),
@@ -555,63 +607,175 @@ function termRow(t) {
   ]);
 }
 
-function detailPanel() {
-  if (!S.selected) return null;
-  const close = el('button', {
-    class: 'icon-btn sm', 'aria-label': 'Close details', title: 'Close (Esc)',
-    onclick: () => { S.selected = null; S.detail = null; render(); },
-  }, [icon('close')]);
-  const d = S.detail;
-  if (!d) {
-    return el('aside', { class: 'panel', 'aria-label': 'Reference details' }, [
-      el('div', { class: 'panel-head' }, [el('span', { class: 'id', text: S.selected }), close]),
-      el('div', { class: 'pbody note', text: 'Loading…' }),
+/* A deliberately tiny Markdown reader for the record's prose: paragraphs, bullet lists,
+   **bold**, *italic* and `code`. It builds DOM nodes, never innerHTML. A `#rrggbb` code
+   span gets a swatch, because the Read section is written in measured hex. */
+const HEX = /^#[0-9a-f]{6}$/i;
+function inline(text) {
+  const out = [];
+  const re = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*\s][^*]*\*)/g;
+  let last = 0, m;
+  while ((m = re.exec(text))) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    const t = m[0];
+    if (t.startsWith('**')) out.push(el('strong', {}, inline(t.slice(2, -2))));
+    else if (t.startsWith('`')) {
+      const c = t.slice(1, -1);
+      out.push(HEX.test(c)
+        ? el('code', { class: 'hex' }, [el('i', { class: 'sw', style: `background:${c}` }), c])
+        : el('code', { text: c }));
+    } else out.push(el('em', {}, inline(t.slice(1, -1))));
+    last = re.lastIndex;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
+function prose(md) {
+  const blocks = String(md || '').split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
+  return el('div', { class: 'prose' }, blocks.map((b) => (/^[-*] /.test(b)
+    ? el('ul', {}, b.split('\n').map((l) => el('li', {}, inline(l.replace(/^[-*]\s+/, '')))))
+    : el('p', {}, inline(b.replace(/\n/g, ' '))))));
+}
+
+/** Every distinct hex the analysis measured, in the order it mentions them. */
+function measuredPalette(md) {
+  const seen = new Set();
+  for (const m of String(md || '').matchAll(/#[0-9a-fA-F]{6}\b/g)) seen.add(m[0].toLowerCase());
+  return [...seen].slice(0, 16);
+}
+function paletteStrip(hexes) {
+  return el('div', { class: 'palette' }, hexes.map((h) => el('button', {
+    class: 'swatch', title: `Copy ${h}`, 'aria-label': `Copy ${h}`,
+    onclick: async () => {
+      try { await navigator.clipboard.writeText(h); toast(`Copied ${h}`); } catch { toast(h); }
+    },
+  }, [el('span', { class: 'chip-col', style: `background:${h}` }), el('code', { text: h })])));
+}
+
+let heroCache = null;
+
+function refPage() {
+  const id = S.refId;
+  const r = S.refs.find((x) => x.id === id);
+  const d = S.detail && S.detail.id === id ? S.detail : null;
+  const order = refOrder(id);
+  const i = order.findIndex((x) => x.id === id);
+  const prev = i > 0 ? order[i - 1] : null;
+  const next = i >= 0 && i < order.length - 1 ? order[i + 1] : null;
+  const filteredOrder = order !== S.refs && order.length !== S.refs.length;
+
+  const head = el('div', { class: 'page-head ref-head' }, [
+    el('button', { class: 'btn sm', onclick: backToGallery, title: 'Back to the gallery (Esc)' }, [icon('back'), 'Gallery']),
+    el('span', { class: 'ref-id', text: id }),
+    r && r.verdict ? el('span', { class: 'pill ' + r.verdict, text: r.verdict }) : null,
+    r && r.status === 'unreviewed' ? el('span', { class: 'pill unreviewed', text: 'to review' }) : null,
+    r && r.sam_reaction === 'like' ? el('span', { class: 'pill like' }, [icon('heart'), 'liked']) : null,
+    el('div', { class: 'end' }, [
+      i >= 0 ? el('span', { class: 'sub pos', text: `${i + 1} of ${order.length}${filteredOrder ? ' filtered' : ''}` }) : null,
+      el('div', { class: 'stepper' }, [
+        el('button', { class: 'icon-btn sm', disabled: !prev, title: prev ? `Previous: ${prev.id} (←)` : 'First reference', 'aria-label': 'Previous reference', onclick: () => stepRef(-1) }, [icon('chevronL')]),
+        el('button', { class: 'icon-btn sm', disabled: !next, title: next ? `Next: ${next.id} (→)` : 'Last reference', 'aria-label': 'Next reference', onclick: () => stepRef(1) }, [icon('chevron')]),
+      ]),
+    ]),
+  ]);
+  const page = (kids) => el('article', { class: 'refpage', 'data-id': id }, [head, ...kids]);
+
+  if (!r && S.refs.length && (!d || d.error)) {
+    return page([el('div', { class: 'empty' }, [
+      el('b', { text: `${id} is not in this library` }),
+      el('div', { text: 'It may have been renamed or removed from the vault.' }),
+      el('button', { class: 'btn', onclick: backToGallery }, ['Back to the gallery']),
+    ])]);
+  }
+  if (d && d.error) return page([el('div', { class: 'hint warn', style: 'margin:20px', text: d.error })]);
+  if (!d) return page([el('div', { class: 'note', style: 'padding:24px 20px', text: 'Loading…' })]);
+
+  const rr = r || d;
+  const byId = new Map(S.refs.map((x) => [x.id, x]));
+  const sec = (title, kids, cls = '') => el('section', { class: 'rsec ' + cls }, [el('h3', { text: title }), ...[].concat(kids)]);
+  const kv = (k, v) => el('div', {}, [el('dt', { text: k }), el('dd', { text: v || '—' })]);
+
+  // facets, grouped by family letter in A–L order
+  const famName = Object.fromEntries(((S.overview && S.overview.facets) || []).map((f) => [f.letter, f.name]));
+  const fam = new Map();
+  for (const t of d.facetDetail || []) {
+    const L = String(t.id).split('.')[0];
+    if (!fam.has(L)) fam.set(L, []);
+    fam.get(L).push(t);
+  }
+  const families = [...fam.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+  const palette = measuredPalette(d.read);
+  const near = (d.neighbours || []).filter((n) => byId.has(n.id));
+
+  // The hero is reused across repaints of the same reference: a fresh <img> has no height
+  // until it decodes, which would clamp the restored scroll position after a reaction.
+  if (!heroCache || heroCache.dataset.id !== id) {
+    heroCache = el('div', { class: 'ref-hero hatch', 'data-id': id }, [
+      d.image
+        ? el('a', { href: '/img/' + d.image, target: '_blank', rel: 'noopener', title: 'Open the full-size image' }, [shotImg('/img/' + d.image, d.title)])
+        : el('div', { class: 'shot-missing', text: 'No image recorded' }),
     ]);
   }
-  const r = S.refs.find((x) => x.id === d.id) || d;
-  const sec = (title, kids) => el('section', { class: 'psec' }, [el('h4', { text: title }), ...[].concat(kids)]);
-  const kv = (k, v) => el('div', {}, [el('dt', { text: k }), el('dd', { text: v || '—' })]);
-  const byId = new Map(S.refs.map((x) => [x.id, x]));
+  const main = el('div', { class: 'ref-main' }, [
+    heroCache,
+    palette.length ? sec('Measured palette', [
+      el('p', { class: 'sec-sub', text: 'Every hex the analysis measured, in the order the read cites them. Select one to copy it.' }),
+      paletteStrip(palette),
+    ]) : null,
+    d.read ? sec('Read', prose(d.read)) : null,
+    d.why ? sec('Why the verdict', prose(d.why)) : null,
+    d.notes ? sec('Notes', prose(d.notes)) : null,
+  ]);
 
-  return el('aside', { class: 'panel', 'aria-label': 'Reference details' }, [
-    el('div', { class: 'panel-head' }, [
-      el('span', { class: 'id', text: d.id }),
-      d.verdict ? el('span', { class: 'pill ' + d.verdict, text: d.verdict }) : null,
-      close,
-    ]),
-    el('div', { class: 'pbody' }, [
-      el('h2', { text: d.title || d.id }),
-      el('div', { class: 'src', text: [d.source, d.kind].filter(Boolean).join(' · ') }),
-      d.image ? el('div', { class: 'shot-wrap' }, [shotImg('/img/' + d.image, d.title, 'shot-full')]) : null,
+  const side = el('aside', { class: 'ref-side', 'aria-label': 'Classification and reaction' }, [
+    el('div', { class: 'rsec ref-title' }, [
+      el('h1', { text: d.title || d.id }),
+      el('p', { class: 'src', text: d.source || '' }),
+      el('div', { class: 'meta-row' }, [
+        el('span', { class: 'pill', style: 'text-transform:capitalize' }, [shapeGlyph(rr.concept), rr.concept || '—']),
+        d.kind ? el('span', { class: 'pill vio', text: d.kind }) : null,
+        d.captured ? el('span', { class: 'pill', text: 'captured ' + d.captured }) : null,
+      ]),
     ]),
     sec('My reaction', [
-      reactionSeg(r),
+      reactionSeg(rr),
       el('textarea', {
         placeholder: 'Why? One line. "the set rows read at a glance because the weight column is tabular"',
         'aria-label': 'Why — the reason behind your reaction',
         onchange: (e) => saveNote(d.id, e.target.value),
-      }, [r.sam_note || '']),
-      el('p', { class: 'note', style: 'font-size:12px;margin:8px 0 0', text: 'A reaction never changes a facet stance on its own. The reason is what turns a pattern into a recorded preference.' }),
+      }, [rr.sam_note || '']),
+      el('p', { class: 'sec-sub', style: 'margin:8px 0 0', text: 'A reaction never changes a facet stance on its own. The reason is what turns a pattern into a recorded preference.' }),
     ]),
-    sec('Classification', [el('dl', { class: 'kv' }, [
-      kv('Concept', r.concept), kv('Verdict', d.verdict),
+    sec('Classification', el('dl', { class: 'kv' }, [
+      kv('Verdict', d.verdict), kv('Confidence', d.confidence),
       kv('Needs photo', DEP_LABEL[d.imagery_dep] || d.imagery_dep), kv('RTL', d.rtl),
-      kv('Cost', d.cost), kv('Confidence', d.confidence),
-    ])]),
+      kv('Cost', d.cost), kv('Review', d.status),
+    ])),
     d.archetypeDetail && d.archetypeDetail.length ? sec('Archetype', el('div', { class: 'terms' }, d.archetypeDetail.map(termRow))) : null,
-    sec(`Facet terms · ${(d.facetDetail || []).length}`, el('div', { class: 'terms' }, (d.facetDetail || []).map(termRow))),
-    sec('Nearest in the library', (d.neighbours || []).length
-      ? el('div', { class: 'nb' }, d.neighbours.map((n) => el('button', { onclick: () => select(n.id) }, [
-        thumb(byId.get(n.id)),
-        el('span', { style: 'min-width:0' }, [
-          el('div', { class: 'who', text: n.title || n.id }),
-          el('div', { class: 'shared', text: `shares ${n.shared.length}: ${n.shared.slice(0, 3).join(', ')}${n.shared.length > 3 ? '…' : ''}` }),
-        ]),
-        el('span', { class: 'score', text: n.score.toFixed(2) }),
-      ])))
-      : el('div', { class: 'note', text: 'Nothing else shares terms with this one yet.' })),
-    d.read ? sec('Read', el('div', { class: 'note', style: 'white-space:pre-line', text: d.read })) : null,
-    sec('File', el('code', { class: 'path', text: d.file })),
+    sec(`Facet terms · ${(d.facetDetail || []).length}`, families.length
+      ? families.map(([L, terms]) => el('div', { class: 'fam' }, [
+        el('div', { class: 'fam-h' }, [el('b', { text: L }), el('span', { text: famName[L] || '' }), el('span', { class: 'n', text: String(terms.length) })]),
+        el('div', { class: 'terms' }, terms.map(termRow)),
+      ]))
+      : el('div', { class: 'note', text: 'No facet terms recorded.' })),
+    sec('File', [
+      el('code', { class: 'path', text: d.file }),
+      d.modified ? el('p', { class: 'sec-sub', style: 'margin:6px 0 0', text: 'modified ' + d.modified }) : null,
+    ]),
+  ]);
+
+  return page([
+    el('div', { class: 'ref-grid' }, [main, side]),
+    el('section', { class: 'ref-near' }, [
+      el('div', { class: 'near-head' }, [
+        el('h3', { text: 'Nearest in the library' }),
+        el('span', { class: 'sec-sub', text: near.length ? 'Ranked by shared facet terms (IDF-weighted cosine)' : 'Nothing else shares terms with this one yet.' }),
+      ]),
+      near.length ? el('div', { class: 'grid' }, near.map((n) => card(byId.get(n.id), el('span', {
+        class: 'pill', title: `Shares ${n.shared.length}: ${n.shared.join(', ')}`, text: `${Math.round(n.score * 100)}% match`,
+      })))) : null,
+    ]),
   ]);
 }
 
@@ -1062,7 +1226,7 @@ function queueView() {
     head,
     el('div', { class: 'hint info', text: 'The classification below is my proposal. Correcting it, or saying why you like something, is what records your taste.' }),
     ...pending.map((r) => el('div', { class: 'qrow' }, [
-      el('div', { class: 'qshot', onclick: () => openRef(r.id), title: 'Open in gallery' }, [r.image ? shotImg('/img/' + r.image, r.title) : el('div', { class: 'shot-missing' })]),
+      el('div', { class: 'qshot', onclick: () => openRef(r.id), title: `Open ${r.id}` }, [r.image ? shotImg('/img/' + r.image, r.title) : el('div', { class: 'shot-missing' })]),
       el('div', { style: 'min-width:0' }, [
         el('div', { class: 'qt', text: r.title || r.id }),
         el('div', { class: 'qs', text: [r.id, r.source, termName(r.archetype[0] || '')].filter(Boolean).join(' · ') }),
@@ -1081,7 +1245,7 @@ function queueView() {
           placeholder: 'Why? (this is the evidence)', 'aria-label': `Why — ${r.id}`,
           onchange: (e) => saveNote(r.id, e.target.value),
         }, [r.sam_note || '']),
-        el('button', { class: 'btn sm', onclick: () => openRef(r.id) }, ['Open in gallery', icon('arrow')]),
+        el('button', { class: 'btn sm', onclick: () => openRef(r.id) }, ['Open reference page', icon('arrow')]),
       ]),
     ])),
   ]);
@@ -1313,21 +1477,38 @@ function renderContent() {
   return false;
 }
 
+const SCROLLERS = '.gal-main, .refpage, .list-view, .dash, .inbox';
+
 function render() {
   const main = $('#main');
+  // A repaint of the same screen (after a reaction, a reload of the library) keeps its scroll.
+  const key = S.view + ':' + (S.view === 'ref' ? S.refId : '');
+  const old = main.querySelector(SCROLLERS);
+  const keep = main.dataset.key === key && old ? old.scrollTop : null;
   renderChrome();
   if (S.view === 'gallery') {
-    main.className = 'gallery' + (S.selected ? ' detail-open' : '');
-    main.replaceChildren(rail(), galleryMain(), detailPanel() || document.createComment(''));
+    main.className = 'gallery';
+    main.replaceChildren(rail(), galleryMain());
   } else {
     main.className = '';
-    const view = S.view === 'overview' ? overviewView()
+    const view = S.view === 'ref' ? refPage()
+      : S.view === 'overview' ? overviewView()
       : S.view === 'graph' ? graphView()
         : S.view === 'queue' ? queueView()
           : S.view === 'candidates' ? candidatesView()
             : inboxView();
     main.replaceChildren(view);
   }
+  main.dataset.key = key;
+  const sc = main.querySelector(SCROLLERS);
+  if (sc && keep !== null) sc.scrollTop = keep;
+  else if (sc && S.view === 'gallery' && S.restoreGallery) {
+    // Back from a reference page: land where you were, with that card in view.
+    sc.scrollTop = S.galleryScroll;
+    const c = S.lastRef && sc.querySelector(`.card[data-id="${CSS.escape(S.lastRef)}"]`);
+    if (c) c.scrollIntoView({ block: 'nearest' });
+  }
+  S.restoreGallery = false;
   syncOverlay();
 }
 
@@ -1409,7 +1590,10 @@ window.addEventListener('paste', async (e) => {
 hydrateIcons();
 
 for (const b of document.querySelectorAll('#nav button')) {
-  b.addEventListener('click', () => { if (b.dataset.view !== 'gallery') { S.selected = null; S.detail = null; } setView(b.dataset.view); });
+  b.addEventListener('click', () => {
+    if (b.dataset.view === 'gallery' && S.view === 'ref') { backToGallery(); return; }
+    setView(b.dataset.view);
+  });
 }
 
 const q = $('#q');
@@ -1450,18 +1634,38 @@ window.addEventListener('resize', syncOverlay);
 document.addEventListener('keydown', (e) => {
   const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement && document.activeElement.tagName);
   if (e.key === '/' && !typing) { e.preventDefault(); q.focus(); return; }
+  if (S.view === 'ref' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); stepRef(-1); return; }
+    if (e.key === 'ArrowRight') { e.preventDefault(); stepRef(1); return; }
+  }
   if (e.key !== 'Escape') return;
   if (document.body.classList.contains('nav-open')) { document.body.classList.remove('nav-open'); return; }
   if (S.railOpen) { S.railOpen = false; render(); return; }
-  if (S.selected) { S.selected = null; S.detail = null; render(); }
+  if (S.view === 'ref' && !typing) backToGallery();
 });
 
-window.addEventListener('hashchange', () => {
-  const v = location.hash.slice(1);
-  if (VIEWS[v] && v !== S.view) setView(v);
-});
+/** Back / Forward, or a pasted link: follow the hash. */
+function route() {
+  const h = parseHash();
+  if (h.view === 'ref') {
+    if (S.view === 'ref' && S.refId === h.id) return;
+    S.view = 'ref'; S.refId = h.id; S.lastRef = h.id; S.detail = null;
+    render();
+    loadDetail(h.id);
+    return;
+  }
+  if (h.view !== S.view) {
+    if (h.view === 'gallery' && S.view === 'ref') S.restoreGallery = true;
+    setView(h.view, true);
+  }
+}
+window.addEventListener('popstate', route);
+window.addEventListener('hashchange', route);
 
-loadAll().then(render);
+loadAll().then(() => {
+  render();
+  if (S.view === 'ref') { S.lastRef = S.refId; loadDetail(S.refId); }
+});
 
 /* sign out, shown only when the studio has a login */
 fetch('/api/session').then((r) => r.json()).then((s) => {
