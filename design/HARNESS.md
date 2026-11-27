@@ -7,7 +7,7 @@ Built 29 Oct 2026, the studio added 24 Nov 2026. Nothing here needs a package in
 design-studio    the interface: gallery, filters, graph, queue  tools/studio.js + tools/ui/
 Obsidian Bases   the same data inside Obsidian                  views/*.base
 /design-ingest   analyse images into REF records                ~/.claude/skills/design-ingest/
-design-db MCP    Claude Code queries the database cheaply       tools/design-mcp.js
+design-db MCP    Claude queries and annotates the database      tools/mcp-tools.js (stdio + HTTP /mcp)
 git              every automated write is reversible            the vault is a repo
 ```
 
@@ -166,24 +166,42 @@ collection mechanism.
 
 ## 3 — Querying it: the `design-db` MCP server
 
-`tools/design-mcp.js`, registered at user scope in `~/.claude.json` as `design-db`
-(backup of the previous config: `~/.claude.json.bak-design-mcp`). Zero dependencies — it
-speaks JSON-RPC on stdio and parses the vault's markdown directly, so there is no package to
-install, pin or update, and it cannot drift from the files.
+Every tool lives in `tools/mcp-tools.js` and is served two ways:
+
+- **stdio** — `tools/design-mcp.js`, registered at user scope in `~/.claude.json` as
+  `design-db` (backup of the previous config: `~/.claude.json.bak-design-mcp`), for Claude
+  Code and Claude Desktop on this machine.
+- **HTTP** — `/mcp` on the running studio, for clients that cannot spawn a process here
+  (claude.ai, cloud sessions, the phone). Needs `STUDIO_MCP_TOKEN` as soon as it is
+  reachable from anywhere but this machine.
+
+Zero dependencies: plain JSON-RPC, the vault's markdown parsed directly, writes through
+`tools/vault-write.js` (the studio's own writer), so nothing can drift from the files.
+Client setup: `MCP.md` at the repo root.
 
 **It needs a new Claude Code session to appear.** MCP servers are connected at startup.
 
 | Tool | What it returns |
 |---|---|
-| `design_overview` | The primer: twelve facets with term counts, every preference in one line, decisions, briefs, library size. ~3.8KB — read this instead of loading facet files |
+| `design_overview` | The primer: twelve facets with term counts, every preference in one line, decisions, briefs, library size by concept. Read this instead of loading facet files |
+| `design_stats` | The library in numbers: review progress, reactions, breakdowns by concept, archetype, verdict, RTL, imagery, cost, confidence |
 | `design_facet` | One facet's full vocabulary with stances; filterable to `likes` / `rejects` / `conditional` / `unknown` |
-| `design_terms` | Substring search across all 426 terms when you know the concept but not the ID |
+| `design_terms` | Substring search across all terms when you know the concept but not the ID |
 | `design_validate` | Checks term IDs against the vocabulary, with near-miss suggestions. The drift guard — call before writing IDs anywhere |
 | `design_prefs` | Preference records with their evidence; filter by polarity or facet prefix |
+| `design_candidates` | Queued reasons (evidence) and computed leanings (not evidence) |
 | `design_brief` | A surface's DNA string, constraints, archetype priority and reject line |
-| `design_refs` | Query the library by archetype, verdict, kind, imagery dependency, RTL, cost, status or facet |
+| `design_refs` | Query the library by concept, archetype, verdict, kind, imagery dependency, RTL, cost, status, reaction, facet or free text; compact and paged |
+| `design_ref` | One reference in full: terms with stances by family, Read, verdict, notes, nearest neighbours |
+| `design_image` | The reference (or inbox) image itself, so Claude can look at it |
 | `design_record` | Full text of any record by ID |
+| `design_inbox` | Images waiting for analysis and the last run's state |
 | `design_rubric` | Facet L and the critique output format, for judging a design against a brief |
+| `design_react` | **Write.** Sam's like / dislike / none and his reason — only from what he said |
+| `design_review` | **Write.** Mode 2: agree (reviewed) or correct the classification (corrected) |
+| `design_queue_reason` | **Write.** Queue a reason Sam stated against a term, as evidence for a PREF |
+
+No tool writes a facet stance or a PREF record: those stay Mode 3, in the vault.
 
 **Why this is the load-bearing piece.** The database is ~18k words and can never all fit in
 context. The MCP server means any Claude Code session, in any project, pulls the twenty
@@ -208,5 +226,6 @@ reject, bulk stance editing, and similarity search over embeddings.
 
 1. Add it to `references/_template.md` frontmatter with its allowed values.
 2. Add a `properties` entry and put it in a view's `order` in `views/references.base`.
-3. Add it to the filter list in `design_refs` in `tools/design-mcp.js` (one array).
+3. Add it to the filter list in `design_refs` in `tools/mcp-tools.js` (one array), and to
+   `WRITABLE` / `ENUMS` in `tools/vault-write.js` if Claude or the studio may write it.
 4. Mention it in the skill's reading order so the classifier fills it.

@@ -29,7 +29,7 @@ decisions/          design decision records — what was fixed, and what it cost
 references/         analysed artefacts, scored on the facets (REF-NNNN)
 briefs/             per-surface targets, written as facet terms (BRIEF-slug)
 views/              Obsidian Bases views over all of the above
-tools/              design-mcp.js — the MCP server Claude Code queries
+tools/              mcp-tools.js — the MCP service (stdio: design-mcp.js, HTTP: studio /mcp)
 ```
 
 Records are **frontmatter-first**: the queryable data is YAML, the prose below it is for a

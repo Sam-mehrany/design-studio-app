@@ -92,6 +92,12 @@ concept grouping there were 121 cross-concept links out of 279 edges.
   facets A–H — with measured values (real hex codes, real contrast ratios)
   instead of adjectives. Records land `unreviewed`; nothing becomes a stated
   preference until you review it.
+- **Claude connects over MCP.** The same tools are served over stdio
+  (`design/tools/design-mcp.js`, for Claude Code or Claude Desktop beside the vault)
+  and over HTTP at `/mcp` on the running studio (for claude.ai, cloud sessions and the
+  phone, guarded by `STUDIO_MCP_TOKEN`). Claude can query the library, look at the
+  images, and record your reactions and reasons. Setup for every client:
+  [MCP.md](MCP.md).
 - **Phone use.** The same vault can be served to a Muse Space through a host
   bridge — one vault, no separate copy. See [SETUP-MUSE.md](SETUP-MUSE.md).
 

@@ -15,6 +15,7 @@
  */
 
 const http = require('http');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { execFile } = require('child_process');
@@ -49,15 +50,10 @@ if (PUBLIC && !auth.enabled) {
   process.exit(1);
 }
 
-/* ---------- path safety ---------- */
+/* ---------- writes: one shared writer for the studio and both MCP transports ---------- */
 
-/** Resolve a vault-relative path and refuse anything that escapes design/. */
-function safePath(rel) {
-  const p = path.resolve(ROOT, String(rel || '').replace(/^[/\\]+/, ''));
-  const base = path.resolve(ROOT);
-  if (p !== base && !p.startsWith(base + path.sep)) throw new Error('path outside the design folder');
-  return p;
-}
+const { safePath, gitAvailable, updateRecord, queueReason } = require('./vault-write.js');
+const mcp = require('./mcp-tools.js');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -66,77 +62,6 @@ const MIME = {
   '.gif': 'image/gif', '.webp': 'image/webp', '.avif': 'image/avif',
 };
 const IMAGE_EXT = new Set(['.svg', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif']);
-
-/* ---------- git ---------- */
-
-const gitRoot = path.resolve(ROOT, '..');
-let gitAvailable = fs.existsSync(path.join(gitRoot, '.git'));
-function commit(message, files) {
-  if (!gitAvailable) return;
-  execFile('git', ['-C', gitRoot, 'add', ...files], (e1) => {
-    if (e1) return;
-    execFile('git', ['-C', gitRoot, '-c', 'user.name=design-studio',
-      '-c', 'user.email=studio@localhost', 'commit', '-q', '-m', message], () => {});
-  });
-}
-
-/* ---------- record writing ---------- */
-
-/** Only these frontmatter keys may be written from the UI. */
-const WRITABLE = new Set([
-  'sam_reaction', 'sam_note', 'status', 'verdict', 'facets', 'archetype',
-  'imagery_dep', 'rtl', 'cost', 'kind', 'title', 'source', 'confidence',
-]);
-const ENUMS = {
-  sam_reaction: ['like', 'dislike', ''],
-  status: ['unreviewed', 'reviewed', 'corrected'],
-  verdict: ['adopt', 'adapt', 'reject'],
-  imagery_dep: ['hard', 'soft', 'none'],
-  rtl: ['clean', 'risky', 'breaks'],
-  cost: ['low', 'med', 'high'],
-  kind: ['shipped', 'concept', 'print', 'brand'],
-  confidence: ['low', 'med', 'high'],
-};
-
-function updateRecord(id, updates) {
-  const rec = lib.records('design-ref').find((r) => String(r.id) === String(id));
-  if (!rec) throw new Error(`no record ${id}`);
-  const file = safePath(rec._file);
-
-  const clean = {};
-  for (const [k, v] of Object.entries(updates)) {
-    if (!WRITABLE.has(k)) throw new Error(`key not writable: ${k}`);
-    if (ENUMS[k] && !Array.isArray(v) && !ENUMS[k].includes(String(v))) {
-      throw new Error(`invalid value for ${k}: ${v}`);
-    }
-    if (k === 'facets' || k === 'archetype') {
-      const list = (Array.isArray(v) ? v : [v]).map((x) => String(x).trim()).filter(Boolean);
-      const { unknown } = lib.validateTerms(list);
-      if (unknown.length) throw new Error(`unknown facet terms: ${unknown.map((u) => u.id).join(', ')}`);
-      clean[k] = list;
-    } else {
-      clean[k] = v === '' && k === 'sam_reaction' ? null : v;
-    }
-  }
-
-  const before = fs.readFileSync(file, 'utf8');
-  const after = lib.setFrontmatter(before, clean);
-  fs.writeFileSync(file, after, 'utf8');
-
-  // Re-parse to prove the write did not corrupt the file, and that the body is untouched.
-  const reread = fs.readFileSync(file, 'utf8');
-  const fm = lib.frontmatter(reread);
-  if (!fm || fm.type !== 'design-ref') {
-    fs.writeFileSync(file, before, 'utf8');
-    throw new Error('write would have corrupted the record; rolled back');
-  }
-  if (lib.bodyOf(reread) !== lib.bodyOf(before)) {
-    fs.writeFileSync(file, before, 'utf8');
-    throw new Error('write altered the record body; rolled back');
-  }
-  commit(`studio: ${id} ${Object.keys(clean).join(', ')}`, [file]);
-  return fm;
-}
 
 /* ---------- API ---------- */
 
@@ -327,6 +252,16 @@ function startIngest(model) {
   return { ok: true, count };
 }
 
+function ingestState() {
+  return ingestJob
+    ? {
+      running: ingestJob.running, count: ingestJob.count, code: ingestJob.code,
+      model: ingestJob.model || null, queued: !!ingestJob.queued,
+      hint: ingestJob.hint || null, log: ingestJob.log.join('\n').slice(-4000),
+    }
+    : { running: false };
+}
+
 /* ---------- HTTP ---------- */
 
 const json = (res, code, body) => {
@@ -392,11 +327,111 @@ function guard(req, res) {
   return true;
 }
 
+/* ---------- MCP over HTTP (Streamable HTTP, stateless, JSON responses) ----------
+ *
+ * The same tools as the stdio server (mcp-tools.js), for Claude clients that cannot spawn a
+ * process on this machine: a cloud session, claude.ai, the phone. It skips the X-Studio
+ * header (MCP clients do not send it) and is guarded by a token instead:
+ *
+ *   STUDIO_MCP_TOKEN   required whenever the studio is hosted or has a password.
+ *                      Sent as `Authorization: Bearer <token>`, or in the path as
+ *                      /mcp/<token> for clients that cannot set headers (claude.ai).
+ *   With no token and a local, password-less studio, /mcp answers direct loopback
+ *   connections only — anything forwarded by a tunnel or proxy is refused.
+ */
+const MCP_TOKEN = String(process.env.STUDIO_MCP_TOKEN || '').trim();
+const MCP_PROTOCOLS = new Set(mcp.SUPPORTED_PROTOCOLS);
+
+function sameSecret(a, b) {
+  const x = crypto.createHash('sha256').update(String(a)).digest();
+  const y = crypto.createHash('sha256').update(String(b)).digest();
+  return crypto.timingSafeEqual(x, y);
+}
+
+/** Returns null when the request may use MCP, else [status, message]. */
+function mcpDenied(req, route) {
+  let pathToken = '';
+  if (route.startsWith('/mcp/')) {
+    try { pathToken = decodeURIComponent(route.slice('/mcp/'.length)); } catch { pathToken = ''; }
+  }
+  const bearer = (/^Bearer\s+(.+)$/i.exec(String(req.headers.authorization || '')) || [])[1];
+  const given = (bearer || pathToken || '').trim();
+  if (MCP_TOKEN) {
+    const wait = auth.lockedFor(req);
+    if (wait) return [429, `Too many failed attempts. Try again in ${Math.ceil(wait / 60)} min.`];
+    if (!given) return [401, 'MCP token required: Authorization: Bearer <token>, or the /mcp/<token> URL.'];
+    if (!sameSecret(given, MCP_TOKEN)) { auth.recordMiss(req); return [401, 'Wrong MCP token.']; }
+    auth.clearMisses(req);
+    return null;
+  }
+  if (PUBLIC || auth.enabled) {
+    return [403, 'MCP is off on a hosted or password-protected studio until STUDIO_MCP_TOKEN is set.'];
+  }
+  if (given) return [401, 'This studio has no MCP token configured; connect to /mcp without one.'];
+  // Tokenless MCP is for this machine only. A tunnel (cloudflared, ngrok, a reverse proxy)
+  // runs locally and forwards the internet as loopback connections, so also refuse anything
+  // that carries forwarding headers: remote use always needs the token.
+  const loopback = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+  const proxied = ['x-forwarded-for', 'forwarded', 'x-real-ip', 'cf-connecting-ip', 'x-forwarded-host', 'true-client-ip']
+    .some((h) => req.headers[h] !== undefined);
+  if (!loopback || proxied) {
+    return [403, 'This request came through a proxy or tunnel. Set STUDIO_MCP_TOKEN to use MCP from outside this machine.'];
+  }
+  return null;
+}
+
+async function handleMcp(req, res, route) {
+  const reply = (code, body, headers = {}) => {
+    const s = body === undefined ? '' : JSON.stringify(body);
+    res.writeHead(code, {
+      'cache-control': 'no-store',
+      ...(s ? { 'content-type': 'application/json; charset=utf-8', 'content-length': Buffer.byteLength(s) } : {}),
+      ...headers,
+    });
+    res.end(s);
+  };
+  // DNS-rebinding and browser defences, same as the rest of the API.
+  const host = String(req.headers.host || '');
+  if (!ALLOWED_HOSTS.has(host)) {
+    return reply(403, { jsonrpc: '2.0', id: null, error: { code: -32000, message: `unexpected Host header: ${host || '(none)'} — add it to STUDIO_EXTRA_HOSTS` } });
+  }
+  const origin = req.headers.origin;
+  if (origin && !ALLOWED_HOSTS.has(origin.replace(/^https?:\/\//, ''))) {
+    return reply(403, { jsonrpc: '2.0', id: null, error: { code: -32000, message: 'cross-origin request refused' } });
+  }
+  const denied = mcpDenied(req, route);
+  if (denied) {
+    return reply(denied[0], { jsonrpc: '2.0', id: null, error: { code: -32001, message: denied[1] } },
+      denied[0] === 401 ? { 'www-authenticate': 'Bearer realm="design-studio"' } : {});
+  }
+  // Stateless server: no SSE stream to open and no session to end.
+  if (req.method !== 'POST') {
+    return reply(405, { jsonrpc: '2.0', id: null, error: { code: -32000, message: 'Use POST. This server has no SSE stream or sessions.' } }, { allow: 'POST' });
+  }
+  const pv = req.headers['mcp-protocol-version'];
+  if (pv && !MCP_PROTOCOLS.has(String(pv))) {
+    return reply(400, { jsonrpc: '2.0', id: null, error: { code: -32000, message: `Unsupported MCP-Protocol-Version: ${pv}` } });
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse((await readBody(req, 4 << 20)).toString('utf8'));
+  } catch (e) {
+    return reply(400, { jsonrpc: '2.0', id: null, error: { code: -32700, message: `Parse error: ${e.message}` } });
+  }
+  const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() || (req.socket.encrypted ? 'https' : 'http');
+  const ctx = { who: 'mcp', baseUrl: `${proto}://${host}`, ingestStatus: ingestState };
+  const batch = Array.isArray(parsed);
+  const out = (batch ? parsed : [parsed]).map((m) => mcp.handleMessage(m, ctx)).filter(Boolean);
+  if (!out.length) return reply(202);           // only notifications / responses: accepted, no body
+  return reply(200, batch ? out : out[0]);
+}
+
 const server = http.createServer(async (req, res) => {
   let url;
   try { url = new URL(req.url, 'http://127.0.0.1'); } catch { json(res, 400, { error: 'bad url' }); return; }
   const route = url.pathname;
   if (route === '/healthz') return json(res, 200, { ok: true });  // platform health checks use internal hosts
+  if (route === '/mcp' || route.startsWith('/mcp/')) return handleMcp(req, res, route);
   if (!guard(req, res)) return;
 
   try {
@@ -451,16 +486,8 @@ const server = http.createServer(async (req, res) => {
     }
     if (route === '/api/candidate-reason' && req.method === 'POST') {
       const body = JSON.parse((await readBody(req, 1 << 20)).toString('utf8') || '{}');
-      const term = String(body.term || '').trim();
-      const reason = String(body.reason || '').trim();
-      if (!term || !reason) return json(res, 400, { error: 'term and reason are both required' });
-      const { unknown } = lib.validateTerms([term]);
-      if (unknown.length) return json(res, 400, { error: `unknown term: ${term}` });
-      // The queue format lives in lib.js so the writer here and the skill's reader
-      // cannot drift apart.
-      const file = lib.appendQueue({ term, leaning: body.leaning, refs: body.refs, reason });
-      commit(`studio: candidate reason for ${term}`, [file]);
-      return json(res, 200, { ok: true, file: path.relative(ROOT, file).replace(/\\/g, '/') });
+      const file = queueReason({ term: body.term, leaning: body.leaning, refs: body.refs, reason: body.reason }, 'studio');
+      return json(res, 200, { ok: true, file });
     }
     if (route === '/api/models') return json(res, 200, { models: MODELS });
     if (route === '/api/inbox/remove' && req.method === 'POST') {
@@ -476,15 +503,7 @@ const server = http.createServer(async (req, res) => {
       const body = JSON.parse((await readBody(req, 1 << 16)).toString('utf8') || '{}');
       return json(res, 200, startIngest(body.model));
     }
-    if (route === '/api/ingest/status') {
-      return json(res, 200, ingestJob
-        ? {
-          running: ingestJob.running, count: ingestJob.count, code: ingestJob.code,
-          model: ingestJob.model || null, queued: !!ingestJob.queued,
-          hint: ingestJob.hint || null, log: ingestJob.log.join('\n').slice(-4000),
-        }
-        : { running: false });
-    }
+    if (route === '/api/ingest/status') return json(res, 200, ingestState());
     if (route === '/api/upload' && req.method === 'POST') {
       const name = path.basename(String(url.searchParams.get('name') || 'drop.png'));
       const ext = path.extname(name).toLowerCase();
@@ -524,6 +543,7 @@ server.listen(PORT, HOST, () => {
     `design-studio on http://${HOST}:${PORT}${auth.enabled ? '  (login on)' : ''}\n` +
     `  vault:  ${ROOT}\n` +
     `  ui:     ${UI}${UI.startsWith(ROOT) ? '  (live from the vault)' : '  (bundled)'}\n` +
-    `  refs:   ${refs().length}    inbox: ${count}    git: ${gitAvailable ? 'yes' : 'no'}\n`
+    `  refs:   ${refs().length}    inbox: ${count}    git: ${gitAvailable ? 'yes' : 'no'}\n` +
+    `  mcp:    http://${HOST}:${PORT}/mcp  ${MCP_TOKEN ? '(token required)' : (PUBLIC || auth.enabled) ? '(off: set STUDIO_MCP_TOKEN)' : '(local, no token)'}\n`
   );
 });

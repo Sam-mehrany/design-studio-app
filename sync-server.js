@@ -45,7 +45,7 @@ function copyTree(from, to) {
 
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
-for (const f of ['lib.js', 'studio.js', 'auth.js']) fs.copyFileSync(path.join(SRC, f), path.join(OUT, f));
+for (const f of ['lib.js', 'studio.js', 'auth.js', 'vault-write.js', 'mcp-tools.js', 'design-mcp.js']) fs.copyFileSync(path.join(SRC, f), path.join(OUT, f));
 copyTree(path.join(SRC, 'ui'), path.join(OUT, 'ui'));
 
 const files = fs.readdirSync(OUT).length + fs.readdirSync(path.join(OUT, 'ui')).length;
